@@ -148,6 +148,27 @@ p.lead strong{color:#f5f5f7}
 /* ── Hint ── */
 #hint{font-size:1rem}
 
+/* ── Icon bullet list ── */
+.icon-list{list-style:none;margin:1.5rem 0}
+.icon-list li{display:flex;align-items:flex-start;gap:1rem;padding:.6rem 0;font-size:clamp(1rem,1.1vw,1.25rem);color:#a1a1a6;line-height:1.55}
+.icon-list .ico{flex-shrink:0;width:clamp(28px,2.2vw,36px);height:clamp(28px,2.2vw,36px);display:flex;align-items:center;justify-content:center;font-size:clamp(1.1rem,1.4vw,1.5rem);margin-top:1px}
+.icon-list li strong{color:#f5f5f7}
+
+/* ── Mini card grid ── */
+.mini-cards{display:grid;grid-template-columns:1fr 1fr;gap:clamp(1rem,1.5vw,1.5rem);margin:1.5rem 0}
+@media(max-width:600px){.mini-cards{grid-template-columns:1fr!important}}
+.mini-card{border:1px solid #1d1d1f;border-radius:12px;padding:clamp(1rem,1.5vw,1.5rem)}
+.mini-card .mc-icon{font-size:clamp(1.25rem,1.6vw,1.75rem);margin-bottom:.5rem}
+.mini-card h4{font-size:clamp(1rem,1.1vw,1.25rem);font-weight:600;margin-bottom:.35rem}
+.mini-card p{font-size:clamp(1rem,1vw,1.125rem);color:#86868b;line-height:1.5;margin:0}
+
+/* ── Pillar card (taller mini card) ── */
+.pillar-card{border:1px solid #1d1d1f;border-radius:12px;padding:clamp(1.25rem,2vw,2rem)}
+.pillar-card .pc-icon{font-size:clamp(1.5rem,2vw,2rem);margin-bottom:.75rem}
+.pillar-card h4{font-size:clamp(1.1rem,1.3vw,1.5rem);font-weight:600;margin-bottom:.5rem}
+.pillar-card p{font-size:clamp(1rem,1.1vw,1.25rem);color:#a1a1a6;line-height:1.55;margin:0 0 .5rem}
+.pillar-card .pc-fear{font-size:clamp(1rem,1vw,1.125rem);color:#48484a;border-top:1px solid #1d1d1f;padding-top:.5rem;margin-top:.5rem}
+
 /* ── Focus visible (accessibility) ── */
 .quiz-opt:focus-visible,.chk:focus-visible,.bar:focus-visible{outline:2px solid #783AFB;outline-offset:2px;border-radius:4px}
 #zone-prev:focus-visible,#zone-next:focus-visible{outline:none}
@@ -216,8 +237,12 @@ p.lead strong{color:#f5f5f7}
 <div class="slide">
   <div class="eyebrow"><span class="pl">1 — Kontekst strategiczny</span><span class="en">1 — Strategic context</span></div>
   <h2><span class="pl">Stary swiat sie konczy.</span><span class="en">The old world is ending.</span></h2>
-  <p class="lead"><span class="pl">Ludzie pytaja ChatGPT <strong>zanim</strong> otworza Google. AI Overviews odpowiadaja zanim ktokolwiek kliknie. LLM-y nie rankuja po keyword density — cytuja na podstawie <strong>structure, depth, credibility</strong>.</span><span class="en">People ask ChatGPT <strong>before</strong> they open Google. AI Overviews answer before anyone clicks. LLMs don't rank by keyword density — they cite based on <strong>structure, depth, credibility</strong>.</span></p>
-  <p class="lead" style="margin-top:1.25rem"><span class="pl">To nie jest trend. To zmiana kategorii w ktorej Surfer walczy.</span><span class="en">This isn't a trend. It's a category shift for Surfer.</span></p>
+  <ul class="icon-list" style="margin-top:1rem">
+    <li><span class="ico">💬</span><span class="pl">Ludzie pytaja ChatGPT <strong>zanim</strong> otworza Google</span><span class="en">People ask ChatGPT <strong>before</strong> they open Google</span></li>
+    <li><span class="ico">🔍</span><span class="pl">AI Overviews odpowiadaja zanim ktokolwiek kliknie link</span><span class="en">AI Overviews answer before anyone clicks a link</span></li>
+    <li><span class="ico">🧠</span><span class="pl">LLM-y cytuja na podstawie <strong>structure, depth, credibility</strong> — nie keyword density</span><span class="en">LLMs cite based on <strong>structure, depth, credibility</strong> — not keyword density</span></li>
+  </ul>
+  <p class="lead" style="margin-top:1.5rem"><span class="pl">To nie jest trend. To zmiana kategorii w ktorej Surfer walczy.</span><span class="en">This isn't a trend. It's a category shift for Surfer.</span></p>
 </div>
 
 <!-- 2 ━━ CORE TENSION ━━ -->
@@ -234,11 +259,23 @@ p.lead strong{color:#f5f5f7}
     <p style="font-size:clamp(1.5rem,2vw,2.5rem);color:#3a3a3c">→</p>
     <div style="text-align:center"><p class="dim" style="margin-bottom:.35rem;font-size:clamp(.875rem,1vw,1.125rem)"><span class="pl">Stajemy sie</span><span class="en">We become</span></p><p style="font-size:clamp(1.8rem,3.5vw,3.5rem);font-weight:700;letter-spacing:-.02em" class="white">AI Visibility Platform</p></div>
   </div>
-  <table class="tbl">
-    <tr><td><span class="pl">Kategoria</span><span class="en">Category</span></td><td><code>AI Visibility Platform</code> — <span class="pl">platforma, nie tool. Visibility, nie SEO. AI-first.</span><span class="en">platform, not tool. Visibility, not SEO. AI-first.</span></td></tr>
-    <tr><td><span class="pl">Rola</span><span class="en">Role</span></td><td><em>"The operating system for AI search visibility"</em> — <span class="pl">system operacyjny, nie dashboard.</span><span class="en">operating system, not dashboard.</span></td></tr>
-    <tr><td>Main Villain</td><td><span class="orange">Fragmented (ineffective) visibility strategy</span> — <span class="pl">wspolny mianownik wszystkich konkurentow.</span><span class="en">common denominator of all competitors.</span></td></tr>
-  </table>
+  <div class="mini-cards" style="grid-template-columns:1fr 1fr 1fr">
+    <div class="mini-card">
+      <div class="mc-icon">📂</div>
+      <h4><span class="pl">Kategoria</span><span class="en">Category</span></h4>
+      <p><code>AI Visibility Platform</code><br><span class="pl">Platforma, nie tool. Visibility, nie SEO. AI-first.</span><span class="en">Platform, not tool. Visibility, not SEO. AI-first.</span></p>
+    </div>
+    <div class="mini-card">
+      <div class="mc-icon">⚙️</div>
+      <h4><span class="pl">Rola</span><span class="en">Role</span></h4>
+      <p><em>"The operating system for AI search visibility"</em><br><span class="pl">System operacyjny, nie dashboard.</span><span class="en">Operating system, not dashboard.</span></p>
+    </div>
+    <div class="mini-card">
+      <div class="mc-icon">⚔️</div>
+      <h4>Main Villain</h4>
+      <p><span class="orange">Fragmented (ineffective) visibility strategy</span><br><span class="pl">Wspolny mianownik wszystkich konkurentow.</span><span class="en">Common denominator of all competitors.</span></p>
+    </div>
+  </div>
 </div>
 
 <!-- 4 ━━ QUIZ 1 ━━ -->
@@ -262,49 +299,73 @@ p.lead strong{color:#f5f5f7}
 
 <!-- 6 ━━ POSITIONING ━━ -->
 <div class="slide">
-  <h3 class="dim" style="margin-bottom:1.5rem">Positioning statements</h3>
-  <table class="tbl">
-    <tr><td>Official</td><td><em>"Surfer is a leading AI Visibility Platform, helping brands be the answer wherever buyers search."</em><br><span class="dim2">→ PR, About page, oferty</span></td></tr>
-    <tr><td>Hero story</td><td><em>"Your operating system for AI Search Visibility — giving you a clear to-do list to become the answer wherever your buyers search."</em><br><span class="dim2">→ Homepage hero, demo, quick pitch</span></td></tr>
-    <tr><td>Subhead</td><td><em>"Real connections start with being found."</em><br><span class="dim2">→ Emotional closer, use anywhere</span></td></tr>
-  </table>
-  <p class="dim" style="margin-top:1.5rem;font-size:1rem"><span class="pl">Hierarchia: Official → Hero → Subhead. Hero story laduje na homepage. Subhead to emotional closer.</span><span class="en">Hierarchy: Official → Hero → Subhead. Hero story lands on homepage. Subhead is the emotional closer.</span></p>
+  <h3 class="dim" style="margin-bottom:1.25rem">Positioning statements</h3>
+  <div class="slide-scroll">
+  <div class="flow">
+    <div class="flow-step"><div class="flow-num">🏢</div><div><div class="flow-title">Official</div><div class="flow-desc"><em class="white">"Surfer is a leading AI Visibility Platform, helping brands be the answer wherever buyers search."</em><br>→ PR, About page, <span class="pl">oferty</span><span class="en">sales decks</span></div></div></div>
+    <div class="flow-step"><div class="flow-num">🏠</div><div><div class="flow-title">Hero story</div><div class="flow-desc"><em class="white">"Your operating system for AI Search Visibility — giving you a clear to-do list to become the answer wherever your buyers search."</em><br>→ Homepage hero, demo, quick pitch</div></div></div>
+    <div class="flow-step"><div class="flow-num">💬</div><div><div class="flow-title">Subhead</div><div class="flow-desc"><em class="white">"Real connections start with being found."</em><br>→ Emotional closer, <span class="pl">uzyj gdziekolwiek</span><span class="en">use anywhere</span></div></div></div>
+  </div>
+  <p class="dim" style="margin-top:.5rem;font-size:1rem"><span class="pl">Hierarchia: Official → Hero → Subhead. Hero story laduje na homepage.</span><span class="en">Hierarchy: Official → Hero → Subhead. Hero story lands on homepage.</span></p>
+  </div>
 </div>
 
 <!-- 7 ━━ PILLARS ━━ -->
 <div class="slide">
   <h3 class="dim" style="margin-bottom:1.5rem"><span class="pl">Trzy filary produktu</span><span class="en">Three product pillars</span></h3>
   <div class="three-col">
-    <div>
-      <h3>Pre-trained</h3>
-      <p style="color:#a1a1a6;font-size:1rem;line-height:1.55"><span class="pl">Jedyny system pre-trenowany na tym, co faktycznie napedza widocznosc w Google i AI search. Self-improving z kazdym update algorytmu.</span><span class="en">The only system pre-trained on what actually drives visibility in Google and AI search. Self-improving with every algorithm update.</span></p>
-      <p class="dim" style="margin-top:.75rem;font-size:1rem"><span class="pl">Strach: "Nie wiem co algorytm chce"</span><span class="en">Fear: "I don't know what the algorithm wants"</span></p>
+    <div class="pillar-card">
+      <div class="pc-icon">🧠</div>
+      <h4>Pre-trained</h4>
+      <p><span class="pl">Jedyny system pre-trenowany na tym, co faktycznie napedza widocznosc w Google i AI search. Self-improving z kazdym update algorytmu.</span><span class="en">The only system pre-trained on what actually drives visibility in Google and AI search. Self-improving with every algorithm update.</span></p>
+      <div class="pc-fear"><span class="pl">→ Strach: "Nie wiem co algorytm chce"</span><span class="en">→ Fear: "I don't know what the algorithm wants"</span></div>
     </div>
-    <div>
-      <h3>Pre-set</h3>
-      <p style="color:#a1a1a6;font-size:1rem;line-height:1.55"><span class="pl">Brand context wbudowany w kazdy workflow — positioning, tone of voice, differentiators, templates. Kazdy output brzmi jak Ty.</span><span class="en">Brand context embedded in every workflow — positioning, tone of voice, differentiators, templates. Every output sounds like you.</span></p>
-      <p class="dim" style="margin-top:.75rem;font-size:1rem"><span class="pl">Strach: "AI brzmi generycznie, nie jak moja marka"</span><span class="en">Fear: "AI sounds generic, not like my brand"</span></p>
+    <div class="pillar-card">
+      <div class="pc-icon">🎯</div>
+      <h4>Pre-set</h4>
+      <p><span class="pl">Brand context wbudowany w kazdy workflow — positioning, tone of voice, differentiators, templates. Kazdy output brzmi jak Ty.</span><span class="en">Brand context embedded in every workflow — positioning, tone of voice, differentiators, templates. Every output sounds like you.</span></p>
+      <div class="pc-fear"><span class="pl">→ Strach: "AI brzmi generycznie, nie jak moja marka"</span><span class="en">→ Fear: "AI sounds generic, not like my brand"</span></div>
     </div>
-    <div>
-      <h3>Pro-action</h3>
-      <p style="color:#a1a1a6;font-size:1rem;line-height:1.55"><span class="pl">Always-on visibility teammate z expert-level direction dla kazdego czlonka zespolu — od CMO do juniora. Monitoring + priorytety + pomoc.</span><span class="en">Always-on visibility teammate with expert-level direction for every team member — from CMO to junior. Monitoring + priorities + help.</span></p>
-      <p class="dim" style="margin-top:.75rem;font-size:1rem"><span class="pl">Strach: "Mam narzedzie, ale nie wiem co dalej robic"</span><span class="en">Fear: "I have a tool but don't know what to do next"</span></p>
+    <div class="pillar-card">
+      <div class="pc-icon">⚡</div>
+      <h4>Pro-action</h4>
+      <p><span class="pl">Always-on visibility teammate z expert-level direction dla kazdego czlonka zespolu — od CMO do juniora. Monitoring + priorytety + pomoc.</span><span class="en">Always-on visibility teammate with expert-level direction for every team member — from CMO to junior. Monitoring + priorities + help.</span></p>
+      <div class="pc-fear"><span class="pl">→ Strach: "Mam narzedzie, ale nie wiem co dalej robic"</span><span class="en">→ Fear: "I have a tool but don't know what to do next"</span></div>
     </div>
   </div>
 </div>
 
 <!-- 8 ━━ VILLAINS ━━ -->
 <div class="slide">
-  <h3 class="dim" style="margin-bottom:1rem"><span class="pl">Czterech villainow</span><span class="en">Four villains</span></h3>
-  <p class="dim" style="font-size:1rem;margin-bottom:1.25rem"><span class="pl">Nigdy nie wymieniamy z nazwy publicznie. Homepage musi implikowac kontrast.</span><span class="en">Never named publicly. The homepage must imply the contrast.</span></p>
+  <h3 class="dim" style="margin-bottom:.5rem"><span class="pl">Czterech villainow</span><span class="en">Four villains</span></h3>
+  <p class="dim" style="font-size:1rem;margin-bottom:1rem"><span class="pl">Nigdy nie wymieniamy z nazwy publicznie. Homepage musi implikowac kontrast.</span><span class="en">Never named publicly. The homepage must imply the contrast.</span></p>
   <div class="slide-scroll">
-  <table class="tbl">
-    <tr><th>Villain</th><th><span class="pl">Failure mode</span><span class="en">Failure mode</span></th><th><span class="pl">Kontrast Surfera</span><span class="en">Surfer contrast</span></th></tr>
-    <tr><td>Overpriced Enterprise</td><td><span class="pl">Flashy dashboards, 100x markup, monitor but never solve</span><span class="en">Flashy dashboards, 100x markup, monitor but never solve</span></td><td><em>"Elite system, minus the enterprise tag."</em></td></tr>
-    <tr><td>Fragmented Tools</td><td><span class="pl">Duct-taped narzedzia, partial wins, brak strategii</span><span class="en">Duct-taped tools, partial wins, no strategy</span></td><td><em>"One platform. One workflow. Full content loop."</em></td></tr>
-    <tr><td>Thin AI Wrappers</td><td><span class="pl">Guessed ranking factors, hallucinations, generic text</span><span class="en">Guessed ranking factors, hallucinations, generic text</span></td><td><em>"Data-backed, not guesswork."</em></td></tr>
-    <tr><td>Legacy SEO</td><td><span class="pl">Google-only thinking in AI-first world</span><span class="en">Google-only thinking in AI-first world</span></td><td><em>"AI Search Visibility, not just SEO."</em></td></tr>
-  </table>
+  <div class="mini-cards">
+    <div class="mini-card">
+      <div class="mc-icon">💰</div>
+      <h4>Overpriced Enterprise</h4>
+      <p><span class="pl">Flashy dashboards, 100x markup, monitor but never solve</span><span class="en">Flashy dashboards, 100x markup, monitor but never solve</span></p>
+      <p style="margin-top:.5rem"><em class="white">"Elite system, minus the enterprise tag."</em></p>
+    </div>
+    <div class="mini-card">
+      <div class="mc-icon">🧩</div>
+      <h4>Fragmented Tools</h4>
+      <p><span class="pl">Duct-taped narzedzia, partial wins, brak strategii</span><span class="en">Duct-taped tools, partial wins, no strategy</span></p>
+      <p style="margin-top:.5rem"><em class="white">"One platform. One workflow. Full content loop."</em></p>
+    </div>
+    <div class="mini-card">
+      <div class="mc-icon">🤖</div>
+      <h4>Thin AI Wrappers</h4>
+      <p><span class="pl">Guessed ranking factors, hallucinations, generic text</span><span class="en">Guessed ranking factors, hallucinations, generic text</span></p>
+      <p style="margin-top:.5rem"><em class="white">"Data-backed, not guesswork."</em></p>
+    </div>
+    <div class="mini-card">
+      <div class="mc-icon">📉</div>
+      <h4>Legacy SEO</h4>
+      <p><span class="pl">Google-only thinking in AI-first world</span><span class="en">Google-only thinking in AI-first world</span></p>
+      <p style="margin-top:.5rem"><em class="white">"AI Search Visibility, not just SEO."</em></p>
+    </div>
+  </div>
   <p class="dim" style="margin-top:.75rem;font-size:1rem"><span class="pl">Wszyscy prowadza do: <strong class="orange">fragmented (ineffective) visibility strategy</strong>.</span><span class="en">All lead to: <strong class="orange">fragmented (ineffective) visibility strategy</strong>.</span></p>
   </div>
 </div>
@@ -363,11 +424,24 @@ p.lead strong{color:#f5f5f7}
   <div class="two-col">
     <div>
       <h3 class="orange"><span class="pl">Nie rob</span><span class="en">Don't</span></h3>
-      <p style="color:#a1a1a6;font-size:1rem;line-height:1.6"><span class="pl">Feature lista w hero. "We built..." jako opening. Screenshot UI bez kontekstu transformacji. Surfer jako bohater. Capability stats ("processes 1M keywords"). "SEO tool" w prominence.</span><span class="en">Feature list in hero. "We built..." as opening. UI screenshot without transformation context. Surfer as hero. Capability stats ("processes 1M keywords"). "SEO tool" in prominence.</span></p>
+      <ul class="icon-list">
+        <li><span class="ico">✕</span><span class="pl">Feature lista w hero section</span><span class="en">Feature list in the hero section</span></li>
+        <li><span class="ico">✕</span><span class="pl">"We built..." jako opening line</span><span class="en">"We built..." as the opening line</span></li>
+        <li><span class="ico">✕</span><span class="pl">Screenshot UI bez kontekstu transformacji</span><span class="en">UI screenshot without transformation context</span></li>
+        <li><span class="ico">✕</span><span class="pl">Surfer jako bohater historii</span><span class="en">Surfer as the hero of the story</span></li>
+        <li><span class="ico">✕</span><span class="pl">Capability stats ("processes 1M keywords")</span><span class="en">Capability stats ("processes 1M keywords")</span></li>
+        <li><span class="ico">✕</span><span class="pl">"SEO tool" w prominence</span><span class="en">"SEO tool" in prominence</span></li>
+      </ul>
     </div>
     <div>
       <h3 class="green"><span class="pl">Rob</span><span class="en">Do</span></h3>
-      <p style="color:#a1a1a6;font-size:1rem;line-height:1.6"><span class="pl">"Invisible → cited" transformacja w hero. "You/Your" w kazdym zdaniu. Outcome stats ("2x more likely"). Customer jako bohater. Surfer mowi o sobie TYLKO w Surfer Advantage section.</span><span class="en">"Invisible → cited" transformation in hero. "You/Your" in every sentence. Outcome stats ("2x more likely"). Customer as hero. Surfer talks about itself ONLY in Surfer Advantage section.</span></p>
+      <ul class="icon-list">
+        <li><span class="ico">✓</span><span class="pl">"Invisible → cited" transformacja w hero</span><span class="en">"Invisible → cited" transformation in hero</span></li>
+        <li><span class="ico">✓</span><span class="pl">"You/Your" w kazdym zdaniu</span><span class="en">"You/Your" in every sentence</span></li>
+        <li><span class="ico">✓</span><span class="pl">Outcome stats ("2x more likely to hit Top 10")</span><span class="en">Outcome stats ("2x more likely to hit Top 10")</span></li>
+        <li><span class="ico">✓</span><span class="pl">Customer jako bohater (Big Mario)</span><span class="en">Customer as the hero (Big Mario)</span></li>
+        <li><span class="ico">✓</span><span class="pl">Surfer mowi o sobie TYLKO w Advantage section</span><span class="en">Surfer talks about itself ONLY in Advantage section</span></li>
+      </ul>
     </div>
   </div>
 </div>
