@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Surfer S3.0 — Narrative Deep Dive</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+::selection{color:#fff;background:#783AFB}
+html,body{height:100%;overflow:hidden}
+body{
+  font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+  background:#000;color:#fff;
+  -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
+  font-feature-settings:'cv01','cv02','cv05','cv08','cv09','cv10';
+}
+body.lang-pl .en,body.lang-en .pl{display:none!important}
+
+/* ── Story bars ── */
+#bars{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;gap:3px;padding:10px 16px 0;pointer-events:none}
+.bar{flex:1;height:2px;background:rgba(255,255,255,.12);border-radius:1px;overflow:hidden;pointer-events:auto;cursor:pointer}
+.bar-fill{height:100%;width:0;background:rgba(255,255,255,.7);border-radius:1px;transition:width .3s}
+.bar.done .bar-fill{width:100%}
+.bar.active .bar-fill{width:100%;transition:none}
+
+/* ── Nav ── */
+nav{position:fixed;top:16px;left:0;right:0;z-index:150;display:flex;align-items:center;justify-content:space-between;padding:0 clamp(16px,3vw,60px);height:36px}
+.nav-title{font-size:clamp(.8125rem,.9vw,1rem);font-weight:600;color:rgba(255,255,255,.35)}
+.nav-title span{color:rgba(255,255,255,.65)}
+.nav-counter{font-size:clamp(.75rem,.8vw,.9375rem);font-weight:500;color:rgba(255,255,255,.25);font-variant-numeric:tabular-nums}
+.lang-toggle{display:flex;gap:1px;background:rgba(255,255,255,.06);border-radius:6px;overflow:hidden}
+.lang-btn{padding:5px 14px;font-size:clamp(.75rem,.8vw,.9375rem);font-weight:600;border:none;background:transparent;color:rgba(255,255,255,.25);cursor:pointer;font-family:inherit;transition:all .15s}
+.lang-btn.active{background:rgba(255,255,255,.1);color:rgba(255,255,255,.75)}
+
+/* ── Slides ── */
+#deck{position:relative;width:100%;height:100vh}
+.slide{
+  position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;
+  padding:clamp(72px,10vh,200px) clamp(24px,8vw,200px);
+  max-width:min(1400px,80vw);margin:0 auto;
+  opacity:0;transform:translateY(16px);
+  transition:opacity .45s ease,transform .45s ease;
+  pointer-events:none;visibility:hidden;
+}
+.slide.active{opacity:1;transform:none;pointer-events:auto;visibility:visible}
+.slide.center{align-items:center;text-align:center}
+.slide-scroll{overflow-y:auto;max-height:calc(100vh - 180px);padding-right:8px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.08) transparent}
+.slide-scroll::-webkit-scrollbar{width:3px}
+.slide-scroll::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:2px}
+/* 4K+ scaling */
+@media(min-width:2000px){
+  .slide{max-width:min(1800px,70vw)}
+}
+
+/* ── Zones ── */
+#zone-prev,#zone-next{position:fixed;top:52px;bottom:0;z-index:100;cursor:pointer}
+#zone-prev{left:0;width:25%}
+#zone-next{right:0;width:75%}
+#hint{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:150;font-size:.75rem;color:rgba(255,255,255,.15);transition:opacity 1s;pointer-events:none}
+
+/* ── Typography ── */
+.eyebrow{font-size:clamp(.875rem,1.1vw,1.25rem);font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#86868b;margin-bottom:1.25rem}
+h1{font-size:clamp(2.5rem,5.5vw,6rem);font-weight:700;line-height:1.06;letter-spacing:-.03em;margin-bottom:1.25rem;text-wrap:balance}
+h2{font-size:clamp(2rem,4vw,4.5rem);font-weight:700;line-height:1.1;letter-spacing:-.025em;margin-bottom:1rem;text-wrap:balance}
+h3{font-size:clamp(1.25rem,1.8vw,2rem);font-weight:600;line-height:1.2;letter-spacing:-.01em;margin-bottom:.75rem}
+p.lead{font-size:clamp(1.125rem,1.6vw,1.75rem);line-height:1.6;color:#a1a1a6;max-width:800px;text-wrap:pretty}
+p.lead strong{color:#f5f5f7}
+.dim{color:#86868b}
+.dim2{color:#6e6e73}
+.orange{color:#FF5B49}
+.violet{color:#783AFB}
+.green{color:#16B365}
+.white{color:#f5f5f7}
+.quote{font-size:clamp(1.5rem,2.8vw,3rem);font-weight:500;font-style:italic;line-height:1.35;letter-spacing:-.015em;color:#f5f5f7;max-width:900px;text-wrap:balance}
+
+/* ── Table ── */
+.tbl{width:100%;border-collapse:collapse;font-size:clamp(.9375rem,1vw,1.125rem);margin:1.5rem 0}
+.tbl th{text-align:left;font-weight:600;color:#86868b;padding:.75rem 1.25rem .75rem 0;border-bottom:1px solid #1d1d1f;font-size:clamp(.8125rem,.9vw,1rem);letter-spacing:.03em;text-transform:uppercase}
+.tbl td{padding:.75rem 1.25rem .75rem 0;border-bottom:1px solid #1d1d1f;color:#a1a1a6;vertical-align:top;line-height:1.55}
+.tbl td:first-child{color:#f5f5f7;font-weight:600;white-space:nowrap;width:160px}
+.tbl tr:last-child td{border-bottom:none}
+.tbl em{color:#f5f5f7;font-style:normal}
+
+/* ── Flow ── */
+.flow{display:grid;gap:0;margin:1.5rem 0}
+.flow-step{padding:1.25rem 0;border-top:1px solid #1d1d1f;display:grid;grid-template-columns:3rem 1fr;gap:1.25rem;align-items:start}
+.flow-num{font-size:clamp(.875rem,1vw,1.125rem);font-weight:600;color:#48484a;padding-top:.15rem}
+.flow-title{font-size:clamp(1.05rem,1.3vw,1.5rem);font-weight:600;margin-bottom:.25rem}
+.flow-desc{font-size:clamp(.9375rem,1vw,1.125rem);color:#86868b;line-height:1.55}
+.flow-desc strong{color:#f5f5f7}
+
+/* ── Columns ── */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:clamp(2rem,4vw,4rem);margin:2rem 0}
+.three-col{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(1.5rem,2.5vw,2.5rem);margin:2rem 0}
+@media(max-width:680px){.two-col,.three-col{grid-template-columns:1fr;gap:1.5rem}}
+
+/* ── Stats ── */
+.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:clamp(1.5rem,3vw,4rem);margin:2rem 0;text-align:center}
+@media(max-width:680px){.stat-row{grid-template-columns:repeat(2,1fr)}}
+.stat-val{font-size:clamp(2.5rem,5vw,6rem);font-weight:700;letter-spacing:-.03em}
+.stat-label{font-size:clamp(.875rem,1vw,1.125rem);color:#86868b;margin-top:.5rem;line-height:1.4}
+
+/* ── Quiz ── */
+.quiz{max-width:min(600px,100%)}
+.quiz-q{font-size:clamp(1.125rem,1.4vw,1.5rem);font-weight:600;margin-bottom:1.25rem}
+.quiz-opt{display:block;width:100%;text-align:left;padding:1rem 1.25rem;margin-bottom:.5rem;background:transparent;border:1px solid #2d2d2d;border-radius:10px;color:#f5f5f7;font-size:clamp(.9375rem,1vw,1.125rem);cursor:pointer;transition:border-color .15s,background .15s;font-family:inherit;font-feature-settings:'cv01','cv02','cv05','cv08','cv09','cv10'}
+.quiz-opt:hover{border-color:#48484a;background:rgba(255,255,255,.03)}
+.quiz-opt.correct{border-color:#16B365;background:rgba(22,179,101,.08);color:#16B365;pointer-events:none}
+.quiz-opt.wrong{border-color:#FF5B49;background:rgba(255,91,73,.05);color:#FF5B49;pointer-events:none;opacity:.5}
+.quiz-opt.disabled{pointer-events:none;opacity:.25}
+.quiz-fb{margin-top:.75rem;font-size:clamp(.875rem,1vw,1.0625rem);line-height:1.55;display:none;color:#86868b}
+.quiz-fb.show{display:block}
+.quiz-fb.correct{color:#16B365}
+.quiz-fb.wrong{color:#FF5B49}
+
+/* ── Checklist ── */
+.checklist{max-width:min(640px,100%);margin:1rem 0}
+.chk{display:flex;align-items:flex-start;gap:1rem;padding:.875rem 0;border-bottom:1px solid #1d1d1f;cursor:pointer;transition:opacity .15s}
+.chk:last-child{border-bottom:none}
+.chk-box{width:20px;height:20px;border-radius:5px;flex-shrink:0;margin-top:2px;border:1.5px solid #3a3a3c;display:flex;align-items:center;justify-content:center;font-size:.7rem;transition:all .15s;color:transparent}
+.chk.done .chk-box{background:#16B365;border-color:#16B365;color:#fff}
+.chk.done{opacity:.35}
+.chk-text{font-size:clamp(.9375rem,1vw,1.125rem);line-height:1.5;color:#d1d1d6}
+.chk-text small{display:block;color:#86868b;font-size:clamp(.8125rem,.9vw,1rem);margin-top:.125rem}
+
+/* ── Mario image ── */
+.mario-img{max-width:min(100%,720px);border-radius:16px;margin:2rem auto 1rem;display:block}
+
+/* ── Body text in columns/cards ── */
+.col-body{font-size:clamp(.9375rem,1.1vw,1.25rem);color:#a1a1a6;line-height:1.55}
+.col-sub{margin-top:.75rem;font-size:clamp(.8125rem,.9vw,1rem)}
+
+/* ── Large-screen diagram text ── */
+.diagram-label{font-size:clamp(.8125rem,.9vw,1rem)}
+.diagram-val{font-size:clamp(1.5rem,3vw,2.75rem);font-weight:700}
+
+/* ── Hint ── */
+#hint{font-size:clamp(.75rem,.8vw,.9375rem)}
+
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body class="lang-pl">
+
+<div id="bars"></div>
+<nav>
+  <div class="nav-title"><span>S3.0</span> Deep Dive</div>
+  <div style="display:flex;align-items:center;gap:16px">
+    <div class="nav-counter" id="counter">1 / —</div>
+    <div class="lang-toggle">
+      <button class="lang-btn active" onclick="setLang('pl')">PL</button>
+      <button class="lang-btn" onclick="setLang('en')">EN</button>
+    </div>
+  </div>
+</nav>
+<div id="zone-prev" onclick="go(-1)"></div>
+<div id="zone-next" onclick="go(1)"></div>
+<div id="hint"><span class="pl">← → klawisze lub kliknij po bokach</span><span class="en">← → keys or click sides</span></div>
+
+<div id="deck">
+
+<!-- 0 ━━ HERO ━━ -->
+<div class="slide center">
+  <div class="eyebrow">Internal / S3.0</div>
+  <h1>Narrative &amp;<br><span class="violet">Homepage</span></h1>
+  <p class="lead" style="margin:0 auto"><span class="pl">Nowa narracja Surfera, Big Mario framework, struktura homepage sekcja po sekcji, design brief i plan launchu kampanii.</span><span class="en">Surfer's new narrative, Big Mario framework, homepage structure section by section, design brief, and campaign launch plan.</span></p>
+</div>
+
+<!-- 1 ━━ CONTEXT ━━ -->
+<div class="slide">
+  <div class="eyebrow"><span class="pl">1 — Kontekst strategiczny</span><span class="en">1 — Strategic context</span></div>
+  <h2><span class="pl">Stary swiat sie konczy.</span><span class="en">The old world is ending.</span></h2>
+  <p class="lead"><span class="pl">Ludzie pytaja ChatGPT <strong>zanim</strong> otworza Google. AI Overviews odpowiadaja zanim ktokolwiek kliknie. LLM-y nie rankuja po keyword density — cytuja na podstawie <strong>structure, depth, credibility</strong>.</span><span class="en">People ask ChatGPT <strong>before</strong> they open Google. AI Overviews answer before anyone clicks. LLMs don't rank by keyword density — they cite based on <strong>structure, depth, credibility</strong>.</span></p>
+  <p class="lead" style="margin-top:1.25rem"><span class="pl">To nie jest trend. To zmiana kategorii w ktorej Surfer walczy.</span><span class="en">This isn't a trend. It's a category shift for Surfer.</span></p>
+</div>
+
+<!-- 2 ━━ CORE TENSION ━━ -->
+<div class="slide center">
+  <p class="quote">"When my buyer is looking for solutions like mine online —<br>is my brand the answer,<br>or has it been replaced?"</p>
+  <p class="dim" style="margin-top:2rem;font-size:.9375rem;max-width:600px"><span class="pl">Jedyne pytanie ktore ma znaczenie. Kazda kampania, kazdy sales call, <strong class="white">kazdy ekran homepage'a</strong> musi zmuszac odwiedzajacego do konfrontacji z tym pytaniem.</span><span class="en">The only question that matters. Every campaign, every sales call, <strong class="white">every homepage screen</strong> must force the visitor to confront this question.</span></p>
+</div>
+
+<!-- 3 ━━ TRANSFORMATION ━━ -->
+<div class="slide">
+  <h3 class="dim" style="margin-bottom:2rem"><span class="pl">Oficjalna transformacja</span><span class="en">The transformation</span></h3>
+  <div style="display:flex;align-items:center;gap:clamp(2rem,5vw,5rem);flex-wrap:wrap;justify-content:center;margin-bottom:2rem">
+    <div style="text-align:center"><p class="dim" style="margin-bottom:.35rem;font-size:.875rem"><span class="pl">Bylismy</span><span class="en">We were</span></p><p style="font-size:clamp(1.8rem,3.5vw,3.5rem);font-weight:700;letter-spacing:-.02em" class="orange">SEO Tool</p></div>
+    <p style="font-size:clamp(1.5rem,2vw,2.5rem);color:#3a3a3c">→</p>
+    <div style="text-align:center"><p class="dim" style="margin-bottom:.35rem;font-size:clamp(.875rem,1vw,1.125rem)"><span class="pl">Stajemy sie</span><span class="en">We become</span></p><p style="font-size:clamp(1.8rem,3.5vw,3.5rem);font-weight:700;letter-spacing:-.02em" class="white">AI Visibility Platform</p></div>
+  </div>
+  <table class="tbl">
+    <tr><td><span class="pl">Kategoria</span><span class="en">Category</span></td><td><code>AI Visibility Platform</code> — <span class="pl">platforma, nie tool. Visibility, nie SEO. AI-first.</span><span class="en">platform, not tool. Visibility, not SEO. AI-first.</span></td></tr>
+    <tr><td><span class="pl">Rola</span><span class="en">Role</span></td><td><em>"The operating system for AI search visibility"</em> — <span class="pl">system operacyjny, nie dashboard.</span><span class="en">operating system, not dashboard.</span></td></tr>
+    <tr><td>Main Villain</td><td><span class="orange">Fragmented (ineffective) visibility strategy</span> — <span class="pl">wspolny mianownik wszystkich konkurentow.</span><span class="en">common denominator of all competitors.</span></td></tr>
+  </table>
+</div>
+
+<!-- 4 ━━ QUIZ 1 ━━ -->
+<div class="slide">
+  <div class="quiz" id="q1">
+    <p class="quiz-q"><span class="pl">Co jest core tension nowej narracji?</span><span class="en">What's the core tension of the new narrative?</span></p>
+    <button class="quiz-opt" onclick="quiz('q1',this,0)"><span class="pl">Surfer vs. konkurencja — kto ma lepsze AI</span><span class="en">Surfer vs. competition — who has better AI</span></button>
+    <button class="quiz-opt" onclick="quiz('q1',this,1)"><span class="pl">Cited vs. Invisible — czy marka jest odpowiedzia, czy zostala zastapiona</span><span class="en">Cited vs. Invisible — is your brand the answer or replaced</span></button>
+    <button class="quiz-opt" onclick="quiz('q1',this,0)"><span class="pl">SEO vs. AI — ktory kanal jest wazniejszy</span><span class="en">SEO vs. AI — which channel matters more</span></button>
+    <p class="quiz-fb correct"><span class="pl">Dokladnie. Homepage musi budowac to napiecie: albo jestes cytowany, albo niewidoczny. Nie ma srodka.</span><span class="en">Exactly. The homepage must build this tension: you're either cited or invisible. No middle ground.</span></p>
+    <p class="quiz-fb wrong"><span class="pl">Core tension to Cited vs. Invisible. Caly messaging opiera sie na tej ramce.</span><span class="en">The core tension is Cited vs. Invisible. All messaging rests on this frame.</span></p>
+  </div>
+</div>
+
+<!-- 5 ━━ NARRATIVE TITLE ━━ -->
+<div class="slide">
+  <div class="eyebrow"><span class="pl">2 — Narracja</span><span class="en">2 — Narrative</span></div>
+  <h2>The Era of<br>Artificial Influence.</h2>
+  <p class="lead"><span class="pl">Pelna narracja rozlozona na czesci. Pozycjonowanie, filary, villainowie, supporting statements — kazdy element ma implikacje designerskie.</span><span class="en">The full narrative broken down. Positioning, pillars, villains, supporting statements — each element has design implications.</span></p>
+</div>
+
+<!-- 6 ━━ POSITIONING ━━ -->
+<div class="slide">
+  <h3 class="dim" style="margin-bottom:1.5rem">Positioning statements</h3>
+  <table class="tbl">
+    <tr><td>Official</td><td><em>"Surfer is a leading AI Visibility Platform, helping brands be the answer wherever buyers search."</em><br><span class="dim2">→ PR, About page, oferty</span></td></tr>
+    <tr><td>Hero story</td><td><em>"Your operating system for AI Search Visibility — giving you a clear to-do list to become the answer wherever your buyers search."</em><br><span class="dim2">→ Homepage hero, demo, quick pitch</span></td></tr>
+    <tr><td>Subhead</td><td><em>"Real connections start with being found."</em><br><span class="dim2">→ Emotional closer, use anywhere</span></td></tr>
+  </table>
+  <p class="dim" style="margin-top:1.5rem;font-size:.875rem"><span class="pl">Hierarchia: Official → Hero → Subhead. Hero story laduje na homepage. Subhead to emotional closer.</span><span class="en">Hierarchy: Official → Hero → Subhead. Hero story lands on homepage. Subhead is the emotional closer.</span></p>
+</div>
+
+<!-- 7 ━━ PILLARS ━━ -->
+<div class="slide">
+  <h3 class="dim" style="margin-bottom:1.5rem"><span class="pl">Trzy filary produktu</span><span class="en">Three product pillars</span></h3>
+  <div class="three-col">
+    <div>
+      <h3>Pre-trained</h3>
+      <p style="color:#a1a1a6;font-size:.9375rem;line-height:1.55"><span class="pl">Jedyny system pre-trenowany na tym, co faktycznie napedza widocznosc w Google i AI search. Self-improving z kazdym update algorytmu.</span><span class="en">The only system pre-trained on what actually drives visibility in Google and AI search. Self-improving with every algorithm update.</span></p>
+      <p class="dim" style="margin-top:.75rem;font-size:.8125rem"><span class="pl">Strach: "Nie wiem co algorytm chce"</span><span class="en">Fear: "I don't know what the algorithm wants"</span></p>
+    </div>
+    <div>
+      <h3>Pre-set</h3>
+      <p style="color:#a1a1a6;font-size:.9375rem;line-height:1.55"><span class="pl">Brand context wbudowany w kazdy workflow — positioning, tone of voice, differentiators, templates. Kazdy output brzmi jak Ty.</span><span class="en">Brand context embedded in every workflow — positioning, tone of voice, differentiators, templates. Every output sounds like you.</span></p>
+      <p class="dim" style="margin-top:.75rem;font-size:.8125rem"><span class="pl">Strach: "AI brzmi generycznie, nie jak moja marka"</span><span class="en">Fear: "AI sounds generic, not like my brand"</span></p>
+    </div>
+    <div>
+      <h3>Pro-action</h3>
+      <p style="color:#a1a1a6;font-size:.9375rem;line-height:1.55"><span class="pl">Always-on visibility teammate z expert-level direction dla kazdego czlonka zespolu — od CMO do juniora. Monitoring + priorytety + pomoc.</span><span class="en">Always-on visibility teammate with expert-level direction for every team member — from CMO to junior. Monitoring + priorities + help.</span></p>
+      <p class="dim" style="margin-top:.75rem;font-size:.8125rem"><span class="pl">Strach: "Mam narzedzie, ale nie wiem co dalej robic"</span><span class="en">Fear: "I have a tool but don't know what to do next"</span></p>
+    </div>
+  </div>
+</div>
+
+<!-- 8 ━━ VILLAINS ━━ -->
+<div class="slide">
+  <h3 class="dim" style="margin-bottom:1rem"><span class="pl">Czterech villainow</span><span class="en">Four villains</span></h3>
+  <p class="dim" style="font-size:.875rem;margin-bottom:1.25rem"><span class="pl">Nigdy nie wymieniamy z nazwy publicznie. Homepage musi implikowac kontrast.</span><span class="en">Never named publicly. The homepage must imply the contrast.</span></p>
+  <div class="slide-scroll">
+  <table class="tbl">
+    <tr><th>Villain</th><th><span class="pl">Failure mode</span><span class="en">Failure mode</span></th><th><span class="pl">Kontrast Surfera</span><span class="en">Surfer contrast</span></th></tr>
+    <tr><td>Overpriced Enterprise</td><td><span class="pl">Flashy dashboards, 100x markup, monitor but never solve</span><span class="en">Flashy dashboards, 100x markup, monitor but never solve</span></td><td><em>"Elite system, minus the enterprise tag."</em></td></tr>
+    <tr><td>Fragmented Tools</td><td><span class="pl">Duct-taped narzedzia, partial wins, brak strategii</span><span class="en">Duct-taped tools, partial wins, no strategy</span></td><td><em>"One platform. One workflow. Full content loop."</em></td></tr>
+    <tr><td>Thin AI Wrappers</td><td><span class="pl">Guessed ranking factors, hallucinations, generic text</span><span class="en">Guessed ranking factors, hallucinations, generic text</span></td><td><em>"Data-backed, not guesswork."</em></td></tr>
+    <tr><td>Legacy SEO</td><td><span class="pl">Google-only thinking in AI-first world</span><span class="en">Google-only thinking in AI-first world</span></td><td><em>"AI Search Visibility, not just SEO."</em></td></tr>
+  </table>
+  <p class="dim" style="margin-top:.75rem;font-size:.875rem"><span class="pl">Wszyscy prowadza do: <strong class="orange">fragmented (ineffective) visibility strategy</strong>.</span><span class="en">All lead to: <strong class="orange">fragmented (ineffective) visibility strategy</strong>.</span></p>
+  </div>
+</div>
+
+<!-- 9 ━━ SUPPORTING ━━ -->
+<div class="slide">
+  <h3 class="dim" style="margin-bottom:1rem">Supporting statements</h3>
+  <p class="dim" style="font-size:.875rem;margin-bottom:1.25rem"><span class="pl">Reinforcing arguments, nie opening lines. Uzyj PO main statement.</span><span class="en">Reinforcing arguments, not opening lines. Use AFTER the main statement.</span></p>
+  <div class="slide-scroll">
+  <table class="tbl">
+    <tr><th><span class="pl">Warstwa</span><span class="en">Layer</span></th><th>Statement</th><th><span class="pl">Gdzie na homepage</span><span class="en">Where on homepage</span></th></tr>
+    <tr><td style="color:#783AFB">Promise</td><td><em>"Built to make sure your brand is the definitive answer to every question your buyers ask."</em></td><td>Hero sub</td></tr>
+    <tr><td style="color:#783AFB">Credibility</td><td><em>"A data-backed platform trained on what makes content cited by Google, LLMs, and buyers."</em></td><td>Surfer Advantage</td></tr>
+    <tr><td style="color:#16B365">Differentiation</td><td><em>"Not a fragmented toolkit. Not a thin AI wrapper. Not an overpriced enterprise dashboard."</em></td><td>Solution section</td></tr>
+    <tr><td style="color:#FF5B49">Always-ON</td><td><em>"An always-on visibility teammate that monitors, prioritizes, and helps you fix it."</em></td><td>How It Works — step 5</td></tr>
+    <tr><td style="color:#f5f5f7">Outcome</td><td><em>"One platform. One workflow. Full content loop. Elite visibility system, minus the complexity."</em></td><td>CTA closer</td></tr>
+  </table>
+  </div>
+</div>
+
+<!-- 10 ━━ QUIZ 2 ━━ -->
+<div class="slide">
+  <div class="quiz" id="q2">
+    <p class="quiz-q"><span class="pl">Filar "Pre-set" odpowiada na jaki strach kupujacego?</span><span class="en">What buyer fear does "Pre-set" address?</span></p>
+    <button class="quiz-opt" onclick="quiz('q2',this,0)"><span class="pl">"Nie wiem co algorytm chce od mojego contentu"</span><span class="en">"I don't know what the algorithm wants from my content"</span></button>
+    <button class="quiz-opt" onclick="quiz('q2',this,1)"><span class="pl">"AI generuje generyczny content, nie brzmi jak moja marka"</span><span class="en">"AI generates generic content that doesn't sound like my brand"</span></button>
+    <button class="quiz-opt" onclick="quiz('q2',this,0)"><span class="pl">"Mam narzedzie ale nie wiem co robic dalej"</span><span class="en">"I have a tool but don't know what to do next"</span></button>
+    <p class="quiz-fb correct"><span class="pl">Tak! Pre-set = brand context wbudowany w kazdy workflow. Odpowiedz na "AI sounds like a robot, not like us." W designie: moment personalizacji.</span><span class="en">Yes! Pre-set = brand context in every workflow. The answer to "AI sounds like a robot, not like us." In design: the personalization moment.</span></p>
+    <p class="quiz-fb wrong"><span class="pl">"Algorytm" = Pre-trained. "Nie wiem co robic" = Pro-action. Pre-set odpowiada na strach przed generycznym AI outputem.</span><span class="en">"Algorithm" = Pre-trained. "What to do" = Pro-action. Pre-set addresses the fear of generic AI output.</span></p>
+  </div>
+</div>
+
+<!-- 11 ━━ BIG MARIO TITLE ━━ -->
+<div class="slide">
+  <div class="eyebrow"><span class="pl">3 — Big Mario Marketing</span><span class="en">3 — Big Mario Marketing</span></div>
+  <h2>Big Mario.</h2>
+  <p class="lead"><span class="pl">Framework Shaana Puri'ego: <strong>nikogo nie obchodzi Twoj produkt — obchodzi ich kim sie stana po jego uzyciu.</strong> Produkt to przeszkoda — kosztuje, wymaga nauki. Ludzi obchodzi outcome.</span><span class="en">Shaan Puri's framework: <strong>nobody cares about your product — they care about who they'll become after using it.</strong> The product is an obstacle — it costs money, requires learning. People care about the outcome.</span></p>
+</div>
+
+<!-- 12 ━━ MARIO DIAGRAM ━━ -->
+<div class="slide center">
+  <div style="display:flex;align-items:center;gap:clamp(1.5rem,3.5vw,3.5rem);flex-wrap:wrap;justify-content:center">
+    <div style="text-align:center"><p class="diagram-label dim2" style="margin-bottom:.35rem">Customer</p><p class="diagram-val" style="color:#86868b">Little Mario</p><p class="diagram-label dim2" style="margin-top:.35rem"><span class="pl">Marketer tracacy visibility</span><span class="en">Marketer losing visibility</span></p></div>
+    <p style="font-size:clamp(1.5rem,2vw,2.5rem);color:#3a3a3c">+</p>
+    <div style="text-align:center"><p class="diagram-label dim2" style="margin-bottom:.35rem">Product</p><p class="diagram-val" style="color:#86868b">Power-Up</p><p class="diagram-label dim2" style="margin-top:.35rem">Surfer Platform</p></div>
+    <p style="font-size:clamp(1.5rem,2vw,2.5rem);color:#3a3a3c">=</p>
+    <div style="text-align:center"><p class="diagram-label dim2" style="margin-bottom:.35rem">Outcome</p><p class="diagram-val white">Big Mario</p><p class="diagram-label dim2" style="margin-top:.35rem"><span class="pl">Brand that IS the answer</span><span class="en">Brand that IS the answer</span></p></div>
+  </div>
+  <img src="https://miro.medium.com/v2/resize:fit:1400/1*VRkFR71GRzGkU1gCH0VJcA.png" alt="Big Mario Marketing diagram" class="mario-img" onerror="this.style.display='none'">
+  <p class="dim" style="margin-top:1rem;max-width:600px;font-size:clamp(.9375rem,1vw,1.125rem)"><span class="pl">Homepage pokazuje <strong class="white">Big Mario</strong> (brand that IS the answer), nie gwiazdke (features).</span><span class="en">The homepage shows <strong class="white">Big Mario</strong> (brand that IS the answer), not the star (features).</span></p>
+</div>
+
+<!-- 13 ━━ DO / DON'T ━━ -->
+<div class="slide">
+  <h3 style="margin-bottom:1.5rem"><span class="pl">Co to znaczy dla designu homepage</span><span class="en">What this means for homepage design</span></h3>
+  <div class="two-col">
+    <div>
+      <h3 class="orange"><span class="pl">Nie rob</span><span class="en">Don't</span></h3>
+      <p style="color:#a1a1a6;font-size:.9375rem;line-height:1.6"><span class="pl">Feature lista w hero. "We built..." jako opening. Screenshot UI bez kontekstu transformacji. Surfer jako bohater. Capability stats ("processes 1M keywords"). "SEO tool" w prominence.</span><span class="en">Feature list in hero. "We built..." as opening. UI screenshot without transformation context. Surfer as hero. Capability stats ("processes 1M keywords"). "SEO tool" in prominence.</span></p>
+    </div>
+    <div>
+      <h3 class="green"><span class="pl">Rob</span><span class="en">Do</span></h3>
+      <p style="color:#a1a1a6;font-size:.9375rem;line-height:1.6"><span class="pl">"Invisible → cited" transformacja w hero. "You/Your" w kazdym zdaniu. Outcome stats ("2x more likely"). Customer jako bohater. Surfer mowi o sobie TYLKO w Surfer Advantage section.</span><span class="en">"Invisible → cited" transformation in hero. "You/Your" in every sentence. Outcome stats ("2x more likely"). Customer as hero. Surfer talks about itself ONLY in Surfer Advantage section.</span></p>
+    </div>
+  </div>
+</div>
+
+<!-- 14 ━━ QUIZ 3 ━━ -->
+<div class="slide">
+  <div class="quiz" id="q3">
+    <p class="quiz-q"><span class="pl">W Big Mario framework, czym jest Surfer?</span><span class="en">In the Big Mario framework, what is Surfer?</span></p>
+    <button class="quiz-opt" onclick="quiz('q3',this,0)"><span class="pl">Big Mario — bo Surfer jest potezny</span><span class="en">Big Mario — because Surfer is powerful</span></button>
+    <button class="quiz-opt" onclick="quiz('q3',this,0)"><span class="pl">Little Mario — bo Surfer potrzebuje klienta</span><span class="en">Little Mario — because Surfer needs the customer</span></button>
+    <button class="quiz-opt" onclick="quiz('q3',this,1)"><span class="pl">Power-Up (gwiazdka) — narzedzie transformacji klienta</span><span class="en">Power-Up (star) — the customer's transformation tool</span></button>
+    <p class="quiz-fb correct"><span class="pl">Surfer to gwiazdka. Klient to Mario. Homepage pokazuje jak klient staje sie Big Mario (brand that IS the answer), nie jak fajny jest Surfer.</span><span class="en">Surfer is the star. Customer is Mario. Homepage shows how the customer becomes Big Mario (brand that IS the answer), not how cool Surfer is.</span></p>
+    <p class="quiz-fb wrong"><span class="pl">Surfer = Power-Up. Klient = Little Mario. Outcome (Big Mario) = brand that IS the answer. Produkt jest srodkiem do celu.</span><span class="en">Surfer = Power-Up. Customer = Little Mario. Outcome (Big Mario) = brand that IS the answer. Product is a means to an end.</span></p>
+  </div>
+</div>
+
+<!-- 15 ━━ HOMEPAGE TITLE ━━ -->
+<div class="slide">
+  <div class="eyebrow"><span class="pl">4 — Homepage S3.0</span><span class="en">4 — Homepage S3.0</span></div>
+  <h2><span class="pl">Sekcja po sekcji.</span><span class="en">Section by section.</span></h2>
+  <p class="lead"><span class="pl">Homepage to nie lista sekcji — to <strong>scenariusz emocjonalny</strong>. Kazda sekcja przesuwa visitora w emotional arc. Jesli sekcja nie przesuwa — wywal ja.</span><span class="en">The homepage isn't a list of sections — it's an <strong>emotional script</strong>. Each section moves the visitor along the emotional arc. If it doesn't move — cut it.</span></p>
+</div>
+
+<!-- 16 ━━ JOURNEY ━━ -->
+<div class="slide">
+  <h3 class="dim" style="margin-bottom:1rem">Emotional journey</h3>
+  <div class="slide-scroll">
+  <table class="tbl">
+    <tr><th>#</th><th>Section</th><th><span class="pl">Emocja</span><span class="en">Emotion</span></th><th><span class="pl">Visitor mysli</span><span class="en">Visitor thinks</span></th></tr>
+    <tr><td>01</td><td>Hero</td><td><span class="pl">Aspiracja</span><span class="en">Aspiration</span></td><td><em><span class="pl">"Chce byc THE answer."</span><span class="en">"I want to be THE answer."</span></em></td></tr>
+    <tr><td>02</td><td>Social Proof</td><td><span class="pl">Walidacja</span><span class="en">Validation</span></td><td><em><span class="pl">"Powazne firmy to robia."</span><span class="en">"Serious companies do this."</span></em></td></tr>
+    <tr><td style="color:#FF5B49">03</td><td>Era of AI</td><td style="color:#FF5B49"><span class="pl">Strach</span><span class="en">Fear</span></td><td><em><span class="pl">"Czy moja marka jest invisible?"</span><span class="en">"Is my brand invisible?"</span></em></td></tr>
+    <tr><td style="color:#16B365">04</td><td>Visibility OS</td><td style="color:#16B365"><span class="pl">Ulga</span><span class="en">Relief</span></td><td><em><span class="pl">"Jest system ktory to ogarnia."</span><span class="en">"There's a system for this."</span></em></td></tr>
+    <tr><td style="color:#783AFB">05</td><td>How It Works</td><td>Clarity</td><td><em><span class="pl">"Rozumiem 5 krokow."</span><span class="en">"I understand the 5 steps."</span></em></td></tr>
+    <tr><td>06</td><td>Advantage</td><td>Trust</td><td><em><span class="pl">"Ci ludzie byli wczesniej right."</span><span class="en">"These people were right before."</span></em></td></tr>
+    <tr><td>07</td><td>CTA</td><td>Action</td><td><em>"Start with Surfer."</em></td></tr>
+  </table>
+  </div>
+</div>
+
+<!-- 17 ━━ HOMEPAGE SECTIONS ━━ -->
+<div class="slide">
+  <h3 class="dim" style="margin-bottom:1rem"><span class="pl">Sekcje + design implications</span><span class="en">Sections + design implications</span></h3>
+  <div class="slide-scroll">
+  <table class="tbl">
+    <tr><th>Section</th><th>Copy</th><th><span class="pl">Design implication</span><span class="en">Design implication</span></th></tr>
+    <tr><td>Hero</td><td><em>"Be The Answer in [animated: Google / ChatGPT / Gemini]"</em></td><td><span class="pl">Animated rotation kluczowy. Label "AI VISIBILITY PLATFORM" nad H1. Big Mario check: customer outcome ✓</span><span class="en">Animated rotation is key. "AI VISIBILITY PLATFORM" label above H1. Big Mario check: customer outcome ✓</span></td></tr>
+    <tr><td>Social Proof</td><td>4.8★ / 2000+ reviews / 150K+ users</td><td><span class="pl">Continuous scroll logos. Copy Big Mario: "Marketers who generate leads", nie "nasi klienci".</span><span class="en">Continuous scroll logos. Big Mario copy: "Marketers who generate leads", not "our clients".</span></td></tr>
+    <tr><td style="color:#FF5B49">Fear Section</td><td><em>"Welcome to The Era of Artificial Influence"</em></td><td><span class="pl"><strong>KLUCZOWA:</strong> ciemniejszy tone, mocniejszy kontrast. Pokaz cited vs invisible w AI. Pivot point strony.</span><span class="en"><strong>KEY:</strong> darker tone, stronger contrast. Show cited vs invisible in AI. The page's pivot point.</span></td></tr>
+    <tr><td style="color:#16B365">Solution</td><td><em>"Surfer: Your AI Search Visibility OS"</em></td><td><span class="pl">3 filary equal-weight. Abstract icons nie UI screenshots. Bolt testimonial zaraz po filarach.</span><span class="en">3 pillars equal-weight. Abstract icons not UI screenshots. Bolt testimonial right after pillars.</span></td></tr>
+    <tr><td style="color:#783AFB">How It Works</td><td><em>"One Platform. One Workflow. Full Content Loop."</em></td><td><span class="pl">5 krokow z progresja emocjonalna. Closed loop (step 5 → 1). "The difference isn't effort. It's direction."</span><span class="en">5 steps with emotional progression. Closed loop (step 5 → 1). "The difference isn't effort. It's direction."</span></td></tr>
+    <tr><td>Advantage</td><td><em>"Built by The Team That Was Right Before"</em></td><td><span class="pl">JEDYNA sekcja "we". Stats counter animation. "See All Data Studies" escape hatch.</span><span class="en">ONLY "we" section. Stats counter animation. "See All Data Studies" escape hatch.</span></td></tr>
+    <tr><td>CTA</td><td><em>"Elite Visibility System Without The Enterprise Price Tag"</em></td><td><span class="pl">Zamyka petle: hero "Be The Answer" → cta "Start With Surfer". Visual elevation. Atakuje Villain 1.</span><span class="en">Closes the loop: hero "Be The Answer" → cta "Start With Surfer". Visual elevation. Attacks Villain 1.</span></td></tr>
+  </table>
+  </div>
+</div>
+
+<!-- 18 ━━ STATS ━━ -->
+<div class="slide center">
+  <h3 class="dim" style="margin-bottom:2.5rem"><span class="pl">Surfer stats — uzywaj na homepage</span><span class="en">Surfer stats — use on homepage</span></h3>
+  <div class="stat-row" style="max-width:800px;margin:0 auto">
+    <div><div class="stat-val orange">2x</div><div class="stat-label">more likely to hit<br>Top 10 in 30 days</div></div>
+    <div><div class="stat-val orange">25%</div><div class="stat-label">more likely cited<br>in AI answers</div></div>
+    <div><div class="stat-val orange">423%</div><div class="stat-label">average visibility<br>lift</div></div>
+    <div><div class="stat-val orange">800%</div><div class="stat-label">top performer<br>growth 2025</div></div>
+  </div>
+  <p class="dim" style="margin-top:2rem;font-size:.875rem"><span class="pl">Outcome stats, nie capability stats. "2x more likely to hit Top 10" > "processes 1M keywords".</span><span class="en">Outcome stats, not capability stats. "2x more likely to hit Top 10" > "processes 1M keywords".</span></p>
+</div>
+
+<!-- 19 ━━ BRIEF TITLE ━━ -->
+<div class="slide">
+  <div class="eyebrow"><span class="pl">5 — Design brief</span><span class="en">5 — Design brief</span></div>
+  <h2>Design Brief &amp;<br>Checklist.</h2>
+  <p class="lead"><span class="pl">5 nadrzednych zasad + checklist do zaznaczania w trakcie projektowania.</span><span class="en">5 core principles + a clickable checklist for use while designing.</span></p>
+</div>
+
+<!-- 20 ━━ PRINCIPLES ━━ -->
+<div class="slide">
+  <div class="slide-scroll">
+  <table class="tbl">
+    <tr><th>#</th><th><span class="pl">Zasada</span><span class="en">Principle</span></th><th><span class="pl">Znaczenie</span><span class="en">Meaning</span></th></tr>
+    <tr><td>01</td><td>Big Mario First</td><td><span class="pl">Kazda sekcja: "jak to pokazuje klientowi kim sie stanie?" Customer is the hero.</span><span class="en">Every section: "how does this show the customer who they'll become?" Customer is the hero.</span></td></tr>
+    <tr><td>02</td><td>Cited vs. Invisible</td><td><span class="pl">Core tension pulsuje przez cala strone. Hero: aspiracja. Problem: strach. CTA: "zacznij albo zostaniesz invisible".</span><span class="en">Core tension pulses through the entire page. Hero: aspiration. Problem: fear. CTA: "start now or stay invisible".</span></td></tr>
+    <tr><td>03</td><td>Platform, not Tool</td><td><span class="pl">Surfer to OS. Komunikuj system, nie feature. Unikaj "screenshot + bullet".</span><span class="en">Surfer is an OS. Communicate system, not features. Avoid "screenshot + bullet".</span></td></tr>
+    <tr><td>04</td><td>Emotional Arc</td><td><span class="pl">Aspiracja → Strach → Ulga → Clarity → Trust → Action. Jesli sekcja nie przesuwa — wywal.</span><span class="en">Aspiration → Fear → Relief → Clarity → Trust → Action. If a section doesn't move — cut it.</span></td></tr>
+    <tr><td>05</td><td>Elite but Accessible</td><td><span class="pl">Premium ale nie cold/corporate. Dla teamu 3 osob i 300-osobowej agencji.</span><span class="en">Premium but not cold/corporate. For a 3-person team and a 300-person agency.</span></td></tr>
+  </table>
+  </div>
+</div>
+
+<!-- 21 ━━ CHECKLIST ━━ -->
+<div class="slide">
+  <h3 style="margin-bottom:1rem">Design Checklist</h3>
+  <div class="slide-scroll">
+  <div class="checklist">
+    <div class="chk" onclick="this.classList.toggle('done')"><div class="chk-box">✓</div><div class="chk-text"><span class="pl">"AI VISIBILITY PLATFORM" label nad H1 — kategoria laduje pierwsza</span><span class="en">"AI VISIBILITY PLATFORM" label above H1 — category lands first</span></div></div>
+    <div class="chk" onclick="this.classList.toggle('done')"><div class="chk-box">✓</div><div class="chk-text"><span class="pl">Animated H1 "Be The Answer in [rotating platforms]" — smooth, czytelny na mobile</span><span class="en">Animated H1 "Be The Answer in [rotating platforms]" — smooth, readable on mobile</span></div></div>
+    <div class="chk" onclick="this.classList.toggle('done')"><div class="chk-box">✓</div><div class="chk-text"><span class="pl">Subhead z "You/Your" — customer jest bohaterem, nie Surfer</span><span class="en">Subhead with "You/Your" — customer is the hero, not Surfer</span></div></div>
+    <div class="chk" onclick="this.classList.toggle('done')"><div class="chk-box">✓</div><div class="chk-text"><span class="pl">Fear section: ciemniejszy tone, visual cited vs. invisible w AI</span><span class="en">Fear section: darker tone, cited vs. invisible visual in AI</span></div></div>
+    <div class="chk" onclick="this.classList.toggle('done')"><div class="chk-box">✓</div><div class="chk-text"><span class="pl">3 filary equal-weight columns z abstract icons (nie UI screenshots)</span><span class="en">3 pillars equal-weight columns with abstract icons (not UI screenshots)</span></div></div>
+    <div class="chk" onclick="this.classList.toggle('done')"><div class="chk-box">✓</div><div class="chk-text"><span class="pl">5 krokow z progresja emocjonalna + closed loop visual</span><span class="en">5 steps with emotional progression + closed loop visual</span></div></div>
+    <div class="chk" onclick="this.classList.toggle('done')"><div class="chk-box">✓</div><div class="chk-text"><span class="pl">Stats z counter animation (2x, 25%, 423%, 800%) — outcome nie capability</span><span class="en">Stats with counter animation (2x, 25%, 423%, 800%) — outcome not capability</span></div></div>
+    <div class="chk" onclick="this.classList.toggle('done')"><div class="chk-box">✓</div><div class="chk-text"><span class="pl">CTA zamyka petle: "Be The Answer" → "Start With Surfer". Visual elevation.</span><span class="en">CTA closes loop: "Be The Answer" → "Start With Surfer". Visual elevation.</span></div></div>
+    <div class="chk" onclick="this.classList.toggle('done')"><div class="chk-box">✓</div><div class="chk-text"><span class="pl">"Elite system without enterprise tag" atakuje Villain 1 na pozegnanie</span><span class="en">"Elite system without enterprise tag" attacks Villain 1 on exit</span></div></div>
+  </div>
+  </div>
+</div>
+
+<!-- 22 ━━ CAMPAIGN TITLE ━━ -->
+<div class="slide">
+  <div class="eyebrow"><span class="pl">6 — Campaign & Launch</span><span class="en">6 — Campaign & Launch</span></div>
+  <h2>Campaign &amp;<br>Launch Plan.</h2>
+  <p class="lead"><span class="pl">Surfer 3.0 to pelny re-positioning launch. Homepage to 1 z 12 deliverables. Teaser video, event LP, ads, emails, SM, Product Hunt — wszystko musi byc narracyjnie spojne.</span><span class="en">Surfer 3.0 is a full re-positioning launch. Homepage is 1 of 12 deliverables. Teaser video, event LP, ads, emails, SM, Product Hunt — everything must be narratively consistent.</span></p>
+</div>
+
+<!-- 23 ━━ TEASER SCRIPT ━━ -->
+<div class="slide">
+  <h3 style="margin-bottom:1rem">Video Teaser — 30s</h3>
+  <p class="dim" style="font-size:.875rem;margin-bottom:1.25rem"><span class="pl">Styl: minimal, high-contrast, bold typography, fast cuts. Ten sam arc co homepage — skompresowany.</span><span class="en">Style: minimal, high-contrast, bold typography, fast cuts. Same arc as homepage — compressed.</span></p>
+  <table class="tbl">
+    <tr><th>Scene</th><th>Visual + VO</th><th><span class="pl">Rola</span><span class="en">Role</span></th></tr>
+    <tr><td>01-02</td><td>"Search has changed. Your buyers ask AI."<br><span class="dim">ChatGPT / Google / Perplexity UI flashes</span></td><td><span class="pl">Kontekst</span><span class="en">Context</span></td></tr>
+    <tr><td>03-05</td><td>"Cited… or invisible."<br><span class="dim">Split screen: <strong class="white">CITED</strong> (white) vs INVISIBLE (black)</span></td><td>Core tension</td></tr>
+    <tr><td>06-07</td><td>"There's a better way."<br><span class="dim">Messy dashboards → clean Surfer UI emerge</span></td><td><span class="pl">Villain → ulga</span><span class="en">Villain → relief</span></td></tr>
+    <tr><td>08-09</td><td>"Be the answer." [animate platforms]<br><span class="dim">Surfer — AI Visibility Platform</span></td><td>CTA</td></tr>
+  </table>
+</div>
+
+<!-- 24 ━━ CHANNELS ━━ -->
+<div class="slide">
+  <h3 class="dim" style="margin-bottom:1rem"><span class="pl">Kanaly launchu</span><span class="en">Launch channels</span></h3>
+  <div class="slide-scroll">
+  <table class="tbl">
+    <tr><th><span class="pl">Kanal</span><span class="en">Channel</span></th><th><span class="pl">Zakres</span><span class="en">Scope</span></th><th>Timeline</th></tr>
+    <tr><td>Ads Set 1</td><td><span class="pl">Event signups</span><span class="en">Event signups</span></td><td><span class="pl">2 tyg. przed premiera</span><span class="en">2 weeks before premiere</span></td></tr>
+    <tr><td>Ads Set 2</td><td><span class="pl">Post-event positioning</span><span class="en">Post-event positioning</span></td><td><span class="pl">Dzien po + batches over summer</span><span class="en">Day after + batches over summer</span></td></tr>
+    <tr><td>Event LP</td><td><span class="pl">Pre-recorded video embed, lead gen</span><span class="en">Pre-recorded video embed, lead gen</span></td><td>Premiere day</td></tr>
+    <tr><td>Emails</td><td><span class="pl">Churned / Registered / Active — 4-email flow</span><span class="en">Churned / Registered / Active — 4-email flow</span></td><td><span class="pl">Premiere + 3 tyg. po</span><span class="en">Premiere + 3 weeks after</span></td></tr>
+    <tr><td>SM + Circle</td><td><span class="pl">Teaser → Premiere → ~8 postow</span><span class="en">Teaser → Premiere → ~8 posts</span></td><td>8 weeks</td></tr>
+    <tr><td>In-App</td><td><span class="pl">Event promo + live icon</span><span class="en">Event promo + live icon</span></td><td>Premiere day</td></tr>
+    <tr><td>Product Hunt</td><td><span class="pl">Oddzielna strona PH</span><span class="en">Separate PH page</span></td><td>TBD</td></tr>
+  </table>
+  </div>
+</div>
+
+<!-- 25 ━━ CAMPAIGN CHECKLIST ━━ -->
+<div class="slide">
+  <h3 style="margin-bottom:.5rem"><span class="pl">Narrative consistency — kazdy asset</span><span class="en">Narrative consistency — every asset</span></h3>
+  <p class="dim" style="font-size:.875rem;margin-bottom:1.25rem"><span class="pl">Ad, email, social post, video, LP — wszystko przechodzi przez ten sam filtr.</span><span class="en">Ad, email, social post, video, LP — everything goes through the same filter.</span></p>
+  <div class="checklist">
+    <div class="chk" onclick="this.classList.toggle('done')"><div class="chk-box">✓</div><div class="chk-text">"AI Visibility Platform", not "SEO tool"</div></div>
+    <div class="chk" onclick="this.classList.toggle('done')"><div class="chk-box">✓</div><div class="chk-text">"Cited vs. Invisible" present or implied</div></div>
+    <div class="chk" onclick="this.classList.toggle('done')"><div class="chk-box">✓</div><div class="chk-text">Customer = hero (Big Mario)</div></div>
+    <div class="chk" onclick="this.classList.toggle('done')"><div class="chk-box">✓</div><div class="chk-text"><span class="pl">Zadni konkurenci wymienieni z nazwy</span><span class="en">No competitors named directly</span></div></div>
+    <div class="chk" onclick="this.classList.toggle('done')"><div class="chk-box">✓</div><div class="chk-text"><span class="pl">CTA z approved list (Try Surfer Platform / Start with Surfer / Audit your brand)</span><span class="en">CTA from approved list (Try Surfer Platform / Start with Surfer / Audit your brand)</span></div></div>
+    <div class="chk" onclick="this.classList.toggle('done')"><div class="chk-box">✓</div><div class="chk-text">"Be the answer" language present</div></div>
+  </div>
+</div>
+
+<!-- 26 ━━ END ━━ -->
+<div class="slide center">
+  <h2>Go build<br><span class="violet">the answer</span>.</h2>
+  <p class="dim" style="margin-top:.75rem;font-size:.8125rem">Surfer S3.0 // Internal</p>
+</div>
+
+</div><!-- /deck -->
+
+<script>
+const slides=document.querySelectorAll('.slide'),total=slides.length;
+let cur=0;
+
+// Build bars
+const barsEl=document.getElementById('bars');
+for(let i=0;i<total;i++){const b=document.createElement('div');b.className='bar';b.innerHTML='<div class="bar-fill"></div>';b.addEventListener('click',()=>goTo(i));barsEl.appendChild(b)}
+const bars=document.querySelectorAll('.bar');
+
+function goTo(n){
+  n=Math.max(0,Math.min(n,total-1));
+  slides[cur].classList.remove('active');
+  // Reset scroll position on slide content
+  const sc=slides[cur].querySelector('.slide-scroll');if(sc)sc.scrollTop=0;
+  cur=n;
+  slides[cur].classList.add('active');
+  bars.forEach((b,i)=>{b.classList.remove('done','active');if(i<cur)b.classList.add('done');if(i===cur)b.classList.add('active')});
+  document.getElementById('counter').textContent=(cur+1)+' / '+total;
+  const url=new URL(location);url.searchParams.set('s',cur);history.replaceState(null,'',url);
+  document.getElementById('hint').style.opacity='0';
+}
+function go(d){goTo(cur+d)}
+
+// Init from URL
+(function(){const p=new URLSearchParams(location.search);const s=parseInt(p.get('s'));goTo(isNaN(s)?0:s)})();
+
+// Keys
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key===' '){e.preventDefault();go(1)}
+  if(e.key==='ArrowLeft'){e.preventDefault();go(-1)}
+});
+
+// Swipe
+let tx=0;
+document.addEventListener('touchstart',e=>{tx=e.touches[0].clientX},{passive:true});
+document.addEventListener('touchend',e=>{const d=e.changedTouches[0].clientX-tx;if(Math.abs(d)>50){d<0?go(1):go(-1)}},{passive:true});
+
+// Lang
+function setLang(l){document.body.className='lang-'+l;document.querySelectorAll('.lang-btn').forEach(b=>b.classList.remove('active'));document.querySelector('.lang-btn[onclick*="'+l+'"]').classList.add('active');localStorage.setItem('s3-lang',l)}
+(function(){var s=localStorage.getItem('s3-lang');if(s)setLang(s)})();
+
+// Quiz (stop propagation so clicking options doesn't advance slide)
+document.querySelectorAll('.quiz-opt').forEach(o=>o.addEventListener('click',e=>e.stopPropagation()));
+function quiz(id,btn,correct){
+  var q=document.getElementById(id);
+  q.querySelectorAll('.quiz-opt').forEach(o=>{o===btn?o.classList.add(correct?'correct':'wrong'):o.classList.add('disabled')});
+  q.querySelectorAll('.quiz-fb').forEach(f=>f.classList.remove('show'));
+  q.querySelector('.quiz-fb.'+(correct?'correct':'wrong')).classList.add('show');
+}
+// Checklist stop propagation
+document.querySelectorAll('.chk').forEach(c=>c.addEventListener('click',e=>e.stopPropagation()));
+</script>
+</body>
+</html>
