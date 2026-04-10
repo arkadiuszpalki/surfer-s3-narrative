@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Surfer S3.0 — Narrative Deep Dive</title>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -63,11 +64,22 @@ nav{position:fixed;top:16px;left:0;right:0;z-index:150;display:flex;align-items:
   .slide{max-width:min(1800px,70vw)}
 }
 
-/* ── Zones ── */
-#zone-prev,#zone-next{position:fixed;top:52px;bottom:0;z-index:100;cursor:pointer}
-#zone-prev{left:0;width:25%}
-#zone-next{right:0;width:75%}
-#hint{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:150;font-size:.75rem;color:rgba(255,255,255,.15);transition:opacity 1s;pointer-events:none}
+/* ── Bottom nav bar ── */
+#bottom-nav{
+  position:fixed;bottom:0;left:0;right:0;z-index:150;
+  display:flex;align-items:center;justify-content:center;gap:clamp(12px,2vw,24px);
+  padding:12px 24px;
+}
+.nav-arrow{
+  display:flex;align-items:center;justify-content:center;
+  width:40px;height:40px;border-radius:8px;border:1px solid rgba(255,255,255,.1);
+  background:rgba(255,255,255,.04);color:rgba(255,255,255,.4);
+  cursor:pointer;transition:all .15s;font-family:inherit;font-size:1rem;
+}
+.nav-arrow:hover{background:rgba(255,255,255,.08);color:rgba(255,255,255,.7);border-color:rgba(255,255,255,.2)}
+.nav-arrow:focus-visible{outline:2px solid #783AFB;outline-offset:2px}
+.nav-arrow svg{width:18px;height:18px}
+#bottom-hint{font-size:1rem;color:rgba(255,255,255,.15);transition:opacity 1s}
 
 /* ── Typography ── */
 .eyebrow{font-size:clamp(1rem,1.1vw,1.25rem);font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#86868b;margin-bottom:1.25rem}
@@ -151,27 +163,29 @@ p.lead strong{color:#f5f5f7}
 /* ── Icon bullet list ── */
 .icon-list{list-style:none;margin:1.5rem 0}
 .icon-list li{display:flex;align-items:flex-start;gap:1rem;padding:.6rem 0;font-size:clamp(1rem,1.1vw,1.25rem);color:#a1a1a6;line-height:1.55}
-.icon-list .ico{flex-shrink:0;width:clamp(28px,2.2vw,36px);height:clamp(28px,2.2vw,36px);display:flex;align-items:center;justify-content:center;font-size:clamp(1.1rem,1.4vw,1.5rem);margin-top:1px}
+.icon-list .ico{flex-shrink:0;width:clamp(24px,2vw,32px);height:clamp(24px,2vw,32px);display:flex;align-items:center;justify-content:center;margin-top:2px}
+.icon-list .ico svg{width:100%;height:100%}
 .icon-list li strong{color:#f5f5f7}
 
 /* ── Mini card grid ── */
 .mini-cards{display:grid;grid-template-columns:1fr 1fr;gap:clamp(1rem,1.5vw,1.5rem);margin:1.5rem 0}
 @media(max-width:600px){.mini-cards{grid-template-columns:1fr!important}}
 .mini-card{border:1px solid #1d1d1f;border-radius:12px;padding:clamp(1rem,1.5vw,1.5rem)}
-.mini-card .mc-icon{font-size:clamp(1.25rem,1.6vw,1.75rem);margin-bottom:.5rem}
+.mini-card .mc-icon{margin-bottom:.75rem;color:#86868b}
+.mini-card .mc-icon svg{width:clamp(24px,2vw,32px);height:clamp(24px,2vw,32px)}
 .mini-card h4{font-size:clamp(1rem,1.1vw,1.25rem);font-weight:600;margin-bottom:.35rem}
 .mini-card p{font-size:clamp(1rem,1vw,1.125rem);color:#86868b;line-height:1.5;margin:0}
 
 /* ── Pillar card (taller mini card) ── */
 .pillar-card{border:1px solid #1d1d1f;border-radius:12px;padding:clamp(1.25rem,2vw,2rem)}
-.pillar-card .pc-icon{font-size:clamp(1.5rem,2vw,2rem);margin-bottom:.75rem}
+.pillar-card .pc-icon{margin-bottom:.75rem}
+.pillar-card .pc-icon svg{width:clamp(28px,2.2vw,36px);height:clamp(28px,2.2vw,36px)}
 .pillar-card h4{font-size:clamp(1.1rem,1.3vw,1.5rem);font-weight:600;margin-bottom:.5rem}
 .pillar-card p{font-size:clamp(1rem,1.1vw,1.25rem);color:#a1a1a6;line-height:1.55;margin:0 0 .5rem}
 .pillar-card .pc-fear{font-size:clamp(1rem,1vw,1.125rem);color:#48484a;border-top:1px solid #1d1d1f;padding-top:.5rem;margin-top:.5rem}
 
 /* ── Focus visible (accessibility) ── */
-.quiz-opt:focus-visible,.chk:focus-visible,.bar:focus-visible{outline:2px solid #783AFB;outline-offset:2px;border-radius:4px}
-#zone-prev:focus-visible,#zone-next:focus-visible{outline:none}
+.quiz-opt:focus-visible,.chk:focus-visible,.bar:focus-visible,.nav-arrow:focus-visible{outline:2px solid #783AFB;outline-offset:2px;border-radius:4px}
 
 /* ── Mobile ── */
 @media(max-width:480px){
@@ -188,8 +202,6 @@ p.lead strong{color:#f5f5f7}
   .slide-scroll{max-height:calc(100vh - 120px)}
   .mario-img{max-width:100%;border-radius:12px}
   .diagram-val{font-size:1.5rem}
-  #zone-prev{width:20%}
-  #zone-next{width:80%}
   .quote{font-size:1.35rem}
   h1{font-size:2.25rem}
   h2{font-size:1.75rem}
@@ -220,9 +232,11 @@ p.lead strong{color:#f5f5f7}
     </div>
   </div>
 </nav>
-<div id="zone-prev" onclick="go(-1)" role="button" aria-label="Previous slide"></div>
-<div id="zone-next" onclick="go(1)" role="button" aria-label="Next slide"></div>
-<div id="hint"><span class="pl">← → klawisze lub kliknij po bokach</span><span class="en">← → keys or click sides</span></div>
+<div id="bottom-nav">
+  <button class="nav-arrow" onclick="go(-1)" aria-label="Previous slide"><i data-lucide="chevron-left"></i></button>
+  <span id="bottom-hint"><span class="pl">← → klawisze</span><span class="en">← → keys</span></span>
+  <button class="nav-arrow" onclick="go(1)" aria-label="Next slide"><i data-lucide="chevron-right"></i></button>
+</div>
 
 <div id="deck">
 
@@ -238,16 +252,16 @@ p.lead strong{color:#f5f5f7}
   <div class="eyebrow"><span class="pl">1 — Kontekst strategiczny</span><span class="en">1 — Strategic context</span></div>
   <h2><span class="pl">Stary swiat sie konczy.</span><span class="en">The old world is ending.</span></h2>
   <ul class="icon-list" style="margin-top:1rem">
-    <li><span class="ico">💬</span><span class="pl">Ludzie pytaja ChatGPT <strong>zanim</strong> otworza Google</span><span class="en">People ask ChatGPT <strong>before</strong> they open Google</span></li>
-    <li><span class="ico">🔍</span><span class="pl">AI Overviews odpowiadaja zanim ktokolwiek kliknie link</span><span class="en">AI Overviews answer before anyone clicks a link</span></li>
-    <li><span class="ico">🧠</span><span class="pl">LLM-y cytuja na podstawie <strong>structure, depth, credibility</strong> — nie keyword density</span><span class="en">LLMs cite based on <strong>structure, depth, credibility</strong> — not keyword density</span></li>
+    <li><span class="ico" style="color:#FF5B49"><i data-lucide="message-circle"></i></span><span class="pl">Ludzie pytaja ChatGPT <strong>zanim</strong> otworza Google</span><span class="en">People ask ChatGPT <strong>before</strong> they open Google</span></li>
+    <li><span class="ico" style="color:#FF5B49"><i data-lucide="scan-search"></i></span><span class="pl">AI Overviews odpowiadaja zanim ktokolwiek kliknie link</span><span class="en">AI Overviews answer before anyone clicks a link</span></li>
+    <li><span class="ico" style="color:#FF5B49"><i data-lucide="brain"></i></span><span class="pl">LLM-y cytuja na podstawie <strong>structure, depth, credibility</strong> — nie keyword density</span><span class="en">LLMs cite based on <strong>structure, depth, credibility</strong> — not keyword density</span></li>
   </ul>
   <p class="lead" style="margin-top:1.5rem"><span class="pl">To nie jest trend. To zmiana kategorii w ktorej Surfer walczy.</span><span class="en">This isn't a trend. It's a category shift for Surfer.</span></p>
 </div>
 
 <!-- 2 ━━ CORE TENSION ━━ -->
 <div class="slide center">
-  <p class="quote">"When my buyer is looking for solutions like mine online —<br>is my brand the answer,<br>or has it been replaced?"</p>
+  <p class="quote">"When my buyer is looking for solutions like mine online —<br>is my brand <span class="green">the answer</span>,<br>or has it been <span class="orange">replaced</span>?"</p>
   <p class="dim" style="margin-top:2rem;font-size:1rem;max-width:600px"><span class="pl">Jedyne pytanie ktore ma znaczenie. Kazda kampania, kazdy sales call, <strong class="white">kazdy ekran homepage'a</strong> musi zmuszac odwiedzajacego do konfrontacji z tym pytaniem.</span><span class="en">The only question that matters. Every campaign, every sales call, <strong class="white">every homepage screen</strong> must force the visitor to confront this question.</span></p>
 </div>
 
@@ -257,21 +271,21 @@ p.lead strong{color:#f5f5f7}
   <div style="display:flex;align-items:center;gap:clamp(2rem,5vw,5rem);flex-wrap:wrap;justify-content:center;margin-bottom:2rem">
     <div style="text-align:center"><p class="dim" style="margin-bottom:.35rem;font-size:1rem"><span class="pl">Bylismy</span><span class="en">We were</span></p><p style="font-size:clamp(1.8rem,3.5vw,3.5rem);font-weight:700;letter-spacing:-.02em" class="orange">SEO Tool</p></div>
     <p style="font-size:clamp(1.5rem,2vw,2.5rem);color:#3a3a3c">→</p>
-    <div style="text-align:center"><p class="dim" style="margin-bottom:.35rem;font-size:clamp(.875rem,1vw,1.125rem)"><span class="pl">Stajemy sie</span><span class="en">We become</span></p><p style="font-size:clamp(1.8rem,3.5vw,3.5rem);font-weight:700;letter-spacing:-.02em" class="white">AI Visibility Platform</p></div>
+    <div style="text-align:center"><p class="dim" style="margin-bottom:.35rem;font-size:clamp(.875rem,1vw,1.125rem)"><span class="pl">Stajemy sie</span><span class="en">We become</span></p><p style="font-size:clamp(1.8rem,3.5vw,3.5rem);font-weight:700;letter-spacing:-.02em;color:#16B365">AI Visibility Platform</p></div>
   </div>
   <div class="mini-cards" style="grid-template-columns:1fr 1fr 1fr">
     <div class="mini-card">
-      <div class="mc-icon">📂</div>
+      <div class="mc-icon" style="color:#783AFB"><i data-lucide="layers"></i></div>
       <h4><span class="pl">Kategoria</span><span class="en">Category</span></h4>
       <p><code>AI Visibility Platform</code><br><span class="pl">Platforma, nie tool. Visibility, nie SEO. AI-first.</span><span class="en">Platform, not tool. Visibility, not SEO. AI-first.</span></p>
     </div>
     <div class="mini-card">
-      <div class="mc-icon">⚙️</div>
+      <div class="mc-icon" style="color:#783AFB"><i data-lucide="cpu"></i></div>
       <h4><span class="pl">Rola</span><span class="en">Role</span></h4>
       <p><em>"The operating system for AI search visibility"</em><br><span class="pl">System operacyjny, nie dashboard.</span><span class="en">Operating system, not dashboard.</span></p>
     </div>
     <div class="mini-card">
-      <div class="mc-icon">⚔️</div>
+      <div class="mc-icon" style="color:#FF5B49"><i data-lucide="swords"></i></div>
       <h4>Main Villain</h4>
       <p><span class="orange">Fragmented (ineffective) visibility strategy</span><br><span class="pl">Wspolny mianownik wszystkich konkurentow.</span><span class="en">Common denominator of all competitors.</span></p>
     </div>
@@ -302,9 +316,9 @@ p.lead strong{color:#f5f5f7}
   <h3 class="dim" style="margin-bottom:1.25rem">Positioning statements</h3>
   <div class="slide-scroll">
   <div class="flow">
-    <div class="flow-step"><div class="flow-num">🏢</div><div><div class="flow-title">Official</div><div class="flow-desc"><em class="white">"Surfer is a leading AI Visibility Platform, helping brands be the answer wherever buyers search."</em><br>→ PR, About page, <span class="pl">oferty</span><span class="en">sales decks</span></div></div></div>
-    <div class="flow-step"><div class="flow-num">🏠</div><div><div class="flow-title">Hero story</div><div class="flow-desc"><em class="white">"Your operating system for AI Search Visibility — giving you a clear to-do list to become the answer wherever your buyers search."</em><br>→ Homepage hero, demo, quick pitch</div></div></div>
-    <div class="flow-step"><div class="flow-num">💬</div><div><div class="flow-title">Subhead</div><div class="flow-desc"><em class="white">"Real connections start with being found."</em><br>→ Emotional closer, <span class="pl">uzyj gdziekolwiek</span><span class="en">use anywhere</span></div></div></div>
+    <div class="flow-step"><div class="flow-num" style="color:#783AFB"><i data-lucide="building-2" style="width:20px;height:20px"></i></div><div><div class="flow-title">Official</div><div class="flow-desc"><em class="white">"Surfer is a leading AI Visibility Platform, helping brands be the answer wherever buyers search."</em><br>→ PR, About page, <span class="pl">oferty</span><span class="en">sales decks</span></div></div></div>
+    <div class="flow-step"><div class="flow-num" style="color:#FF5B49"><i data-lucide="home" style="width:20px;height:20px"></i></div><div><div class="flow-title">Hero story</div><div class="flow-desc"><em class="white">"Your operating system for AI Search Visibility — giving you a clear to-do list to become the answer wherever your buyers search."</em><br>→ Homepage hero, demo, quick pitch</div></div></div>
+    <div class="flow-step"><div class="flow-num" style="color:#16B365"><i data-lucide="quote" style="width:20px;height:20px"></i></div><div><div class="flow-title">Subhead</div><div class="flow-desc"><em class="white">"Real connections start with being found."</em><br>→ Emotional closer, <span class="pl">uzyj gdziekolwiek</span><span class="en">use anywhere</span></div></div></div>
   </div>
   <p class="dim" style="margin-top:.5rem;font-size:1rem"><span class="pl">Hierarchia: Official → Hero → Subhead. Hero story laduje na homepage.</span><span class="en">Hierarchy: Official → Hero → Subhead. Hero story lands on homepage.</span></p>
   </div>
@@ -315,19 +329,19 @@ p.lead strong{color:#f5f5f7}
   <h3 class="dim" style="margin-bottom:1.5rem"><span class="pl">Trzy filary produktu</span><span class="en">Three product pillars</span></h3>
   <div class="three-col">
     <div class="pillar-card">
-      <div class="pc-icon">🧠</div>
+      <div class="pc-icon" style="color:#FF5B49"><i data-lucide="database"></i></div>
       <h4>Pre-trained</h4>
       <p><span class="pl">Jedyny system pre-trenowany na tym, co faktycznie napedza widocznosc w Google i AI search. Self-improving z kazdym update algorytmu.</span><span class="en">The only system pre-trained on what actually drives visibility in Google and AI search. Self-improving with every algorithm update.</span></p>
       <div class="pc-fear"><span class="pl">→ Strach: "Nie wiem co algorytm chce"</span><span class="en">→ Fear: "I don't know what the algorithm wants"</span></div>
     </div>
     <div class="pillar-card">
-      <div class="pc-icon">🎯</div>
+      <div class="pc-icon" style="color:#783AFB"><i data-lucide="fingerprint"></i></div>
       <h4>Pre-set</h4>
       <p><span class="pl">Brand context wbudowany w kazdy workflow — positioning, tone of voice, differentiators, templates. Kazdy output brzmi jak Ty.</span><span class="en">Brand context embedded in every workflow — positioning, tone of voice, differentiators, templates. Every output sounds like you.</span></p>
       <div class="pc-fear"><span class="pl">→ Strach: "AI brzmi generycznie, nie jak moja marka"</span><span class="en">→ Fear: "AI sounds generic, not like my brand"</span></div>
     </div>
     <div class="pillar-card">
-      <div class="pc-icon">⚡</div>
+      <div class="pc-icon" style="color:#16B365"><i data-lucide="radar"></i></div>
       <h4>Pro-action</h4>
       <p><span class="pl">Always-on visibility teammate z expert-level direction dla kazdego czlonka zespolu — od CMO do juniora. Monitoring + priorytety + pomoc.</span><span class="en">Always-on visibility teammate with expert-level direction for every team member — from CMO to junior. Monitoring + priorities + help.</span></p>
       <div class="pc-fear"><span class="pl">→ Strach: "Mam narzedzie, ale nie wiem co dalej robic"</span><span class="en">→ Fear: "I have a tool but don't know what to do next"</span></div>
@@ -342,25 +356,25 @@ p.lead strong{color:#f5f5f7}
   <div class="slide-scroll">
   <div class="mini-cards">
     <div class="mini-card">
-      <div class="mc-icon">💰</div>
+      <div class="mc-icon" style="color:#FF5B49"><i data-lucide="badge-dollar-sign"></i></div>
       <h4>Overpriced Enterprise</h4>
       <p><span class="pl">Flashy dashboards, 100x markup, monitor but never solve</span><span class="en">Flashy dashboards, 100x markup, monitor but never solve</span></p>
       <p style="margin-top:.5rem"><em class="white">"Elite system, minus the enterprise tag."</em></p>
     </div>
     <div class="mini-card">
-      <div class="mc-icon">🧩</div>
+      <div class="mc-icon" style="color:#FF5B49"><i data-lucide="puzzle"></i></div>
       <h4>Fragmented Tools</h4>
       <p><span class="pl">Duct-taped narzedzia, partial wins, brak strategii</span><span class="en">Duct-taped tools, partial wins, no strategy</span></p>
       <p style="margin-top:.5rem"><em class="white">"One platform. One workflow. Full content loop."</em></p>
     </div>
     <div class="mini-card">
-      <div class="mc-icon">🤖</div>
+      <div class="mc-icon" style="color:#FF5B49"><i data-lucide="bot"></i></div>
       <h4>Thin AI Wrappers</h4>
       <p><span class="pl">Guessed ranking factors, hallucinations, generic text</span><span class="en">Guessed ranking factors, hallucinations, generic text</span></p>
       <p style="margin-top:.5rem"><em class="white">"Data-backed, not guesswork."</em></p>
     </div>
     <div class="mini-card">
-      <div class="mc-icon">📉</div>
+      <div class="mc-icon" style="color:#FF5B49"><i data-lucide="trending-down"></i></div>
       <h4>Legacy SEO</h4>
       <p><span class="pl">Google-only thinking in AI-first world</span><span class="en">Google-only thinking in AI-first world</span></p>
       <p style="margin-top:.5rem"><em class="white">"AI Search Visibility, not just SEO."</em></p>
@@ -412,7 +426,7 @@ p.lead strong{color:#f5f5f7}
     <p style="font-size:clamp(1.5rem,2vw,2.5rem);color:#3a3a3c">+</p>
     <div style="text-align:center"><p class="diagram-label dim2" style="margin-bottom:.35rem">Product</p><p class="diagram-val" style="color:#86868b">Power-Up</p><p class="diagram-label dim2" style="margin-top:.35rem">Surfer Platform</p></div>
     <p style="font-size:clamp(1.5rem,2vw,2.5rem);color:#3a3a3c">=</p>
-    <div style="text-align:center"><p class="diagram-label dim2" style="margin-bottom:.35rem">Outcome</p><p class="diagram-val white">Big Mario</p><p class="diagram-label dim2" style="margin-top:.35rem"><span class="pl">Brand that IS the answer</span><span class="en">Brand that IS the answer</span></p></div>
+    <div style="text-align:center"><p class="diagram-label dim2" style="margin-bottom:.35rem">Outcome</p><p class="diagram-val green">Big Mario</p><p class="diagram-label dim2" style="margin-top:.35rem"><span class="pl">Brand that IS the answer</span><span class="en">Brand that IS the answer</span></p></div>
   </div>
   <img src="https://cdn.prod.website-files.com/6623bf84e83241ec49b548e4/67de24f9c5abb9fb742532ee_1_09WmkR4TtduLF6eBhGZ4dQ.webp" alt="Big Mario Marketing diagram" class="mario-img">
   <p class="dim" style="margin-top:1rem;max-width:600px;font-size:clamp(.9375rem,1vw,1.125rem)"><span class="pl">Homepage pokazuje <strong class="white">Big Mario</strong> (brand that IS the answer), nie gwiazdke (features).</span><span class="en">The homepage shows <strong class="white">Big Mario</strong> (brand that IS the answer), not the star (features).</span></p>
@@ -425,22 +439,22 @@ p.lead strong{color:#f5f5f7}
     <div>
       <h3 class="orange"><span class="pl">Nie rob</span><span class="en">Don't</span></h3>
       <ul class="icon-list">
-        <li><span class="ico">✕</span><span class="pl">Feature lista w hero section</span><span class="en">Feature list in the hero section</span></li>
-        <li><span class="ico">✕</span><span class="pl">"We built..." jako opening line</span><span class="en">"We built..." as the opening line</span></li>
-        <li><span class="ico">✕</span><span class="pl">Screenshot UI bez kontekstu transformacji</span><span class="en">UI screenshot without transformation context</span></li>
-        <li><span class="ico">✕</span><span class="pl">Surfer jako bohater historii</span><span class="en">Surfer as the hero of the story</span></li>
-        <li><span class="ico">✕</span><span class="pl">Capability stats ("processes 1M keywords")</span><span class="en">Capability stats ("processes 1M keywords")</span></li>
-        <li><span class="ico">✕</span><span class="pl">"SEO tool" w prominence</span><span class="en">"SEO tool" in prominence</span></li>
+        <li><span class="ico" style="color:#FF5B49"><i data-lucide="x" style="width:18px;height:18px;stroke-width:2.5"></i></span><span class="pl">Feature lista w hero section</span><span class="en">Feature list in the hero section</span></li>
+        <li><span class="ico" style="color:#FF5B49"><i data-lucide="x" style="width:18px;height:18px;stroke-width:2.5"></i></span><span class="pl">"We built..." jako opening line</span><span class="en">"We built..." as the opening line</span></li>
+        <li><span class="ico" style="color:#FF5B49"><i data-lucide="x" style="width:18px;height:18px;stroke-width:2.5"></i></span><span class="pl">Screenshot UI bez kontekstu transformacji</span><span class="en">UI screenshot without transformation context</span></li>
+        <li><span class="ico" style="color:#FF5B49"><i data-lucide="x" style="width:18px;height:18px;stroke-width:2.5"></i></span><span class="pl">Surfer jako bohater historii</span><span class="en">Surfer as the hero of the story</span></li>
+        <li><span class="ico" style="color:#FF5B49"><i data-lucide="x" style="width:18px;height:18px;stroke-width:2.5"></i></span><span class="pl">Capability stats ("processes 1M keywords")</span><span class="en">Capability stats ("processes 1M keywords")</span></li>
+        <li><span class="ico" style="color:#FF5B49"><i data-lucide="x" style="width:18px;height:18px;stroke-width:2.5"></i></span><span class="pl">"SEO tool" w prominence</span><span class="en">"SEO tool" in prominence</span></li>
       </ul>
     </div>
     <div>
       <h3 class="green"><span class="pl">Rob</span><span class="en">Do</span></h3>
       <ul class="icon-list">
-        <li><span class="ico">✓</span><span class="pl">"Invisible → cited" transformacja w hero</span><span class="en">"Invisible → cited" transformation in hero</span></li>
-        <li><span class="ico">✓</span><span class="pl">"You/Your" w kazdym zdaniu</span><span class="en">"You/Your" in every sentence</span></li>
-        <li><span class="ico">✓</span><span class="pl">Outcome stats ("2x more likely to hit Top 10")</span><span class="en">Outcome stats ("2x more likely to hit Top 10")</span></li>
-        <li><span class="ico">✓</span><span class="pl">Customer jako bohater (Big Mario)</span><span class="en">Customer as the hero (Big Mario)</span></li>
-        <li><span class="ico">✓</span><span class="pl">Surfer mowi o sobie TYLKO w Advantage section</span><span class="en">Surfer talks about itself ONLY in Advantage section</span></li>
+        <li><span class="ico" style="color:#16B365"><i data-lucide="check" style="width:18px;height:18px;stroke-width:2.5"></i></span><span class="pl">"Invisible → cited" transformacja w hero</span><span class="en">"Invisible → cited" transformation in hero</span></li>
+        <li><span class="ico" style="color:#16B365"><i data-lucide="check" style="width:18px;height:18px;stroke-width:2.5"></i></span><span class="pl">"You/Your" w kazdym zdaniu</span><span class="en">"You/Your" in every sentence</span></li>
+        <li><span class="ico" style="color:#16B365"><i data-lucide="check" style="width:18px;height:18px;stroke-width:2.5"></i></span><span class="pl">Outcome stats ("2x more likely to hit Top 10")</span><span class="en">Outcome stats ("2x more likely to hit Top 10")</span></li>
+        <li><span class="ico" style="color:#16B365"><i data-lucide="check" style="width:18px;height:18px;stroke-width:2.5"></i></span><span class="pl">Customer jako bohater (Big Mario)</span><span class="en">Customer as the hero (Big Mario)</span></li>
+        <li><span class="ico" style="color:#16B365"><i data-lucide="check" style="width:18px;height:18px;stroke-width:2.5"></i></span><span class="pl">Surfer mowi o sobie TYLKO w Advantage section</span><span class="en">Surfer talks about itself ONLY in Advantage section</span></li>
       </ul>
     </div>
   </div>
@@ -628,7 +642,7 @@ function goTo(n){
   document.getElementById('counter').textContent=(cur+1)+' / '+total;
   // Save position locally (not in URL)
   localStorage.setItem('s3-slide',cur);
-  document.getElementById('hint').style.opacity='0';
+  document.getElementById('bottom-hint').style.opacity='0';
   // Show/hide restart label
   document.getElementById('restart-label').classList.toggle('show',cur>0);
 }
@@ -647,10 +661,11 @@ document.addEventListener('keydown',e=>{
   if(e.key==='End'){e.preventDefault();goTo(total-1)}
 });
 
-// Swipe
+// Swipe (on deck, not on interactive elements)
 let tx=0;
-document.addEventListener('touchstart',e=>{tx=e.touches[0].clientX},{passive:true});
-document.addEventListener('touchend',e=>{const d=e.changedTouches[0].clientX-tx;if(Math.abs(d)>50){d<0?go(1):go(-1)}},{passive:true});
+const deck=document.getElementById('deck');
+deck.addEventListener('touchstart',e=>{tx=e.touches[0].clientX},{passive:true});
+deck.addEventListener('touchend',e=>{const d=e.changedTouches[0].clientX-tx;if(Math.abs(d)>60){d<0?go(1):go(-1)}},{passive:true});
 
 // Lang
 function setLang(l){
@@ -663,16 +678,16 @@ function setLang(l){
 }
 (function(){var s=localStorage.getItem('s3-lang');if(s)setLang(s)})();
 
-// Quiz (stop propagation so clicking options doesn't advance slide)
-document.querySelectorAll('.quiz-opt').forEach(o=>o.addEventListener('click',e=>e.stopPropagation()));
+// Quiz
 function quiz(id,btn,correct){
   var q=document.getElementById(id);
   q.querySelectorAll('.quiz-opt').forEach(o=>{o===btn?o.classList.add(correct?'correct':'wrong'):o.classList.add('disabled')});
   q.querySelectorAll('.quiz-fb').forEach(f=>f.classList.remove('show'));
   q.querySelector('.quiz-fb.'+(correct?'correct':'wrong')).classList.add('show');
 }
-// Checklist stop propagation
-document.querySelectorAll('.chk').forEach(c=>c.addEventListener('click',e=>e.stopPropagation()));
+
+// Lucide icons init
+lucide.createIcons();
 </script>
 </body>
 </html>
